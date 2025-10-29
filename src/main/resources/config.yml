@@ -9,12 +9,43 @@ meta:
   sponsor: "IrixiaGroup.ch"
   website: "https://IrixiaGroup.ch"
 
+# Monde de jeu (doit exister sur le serveur)
 world: "tntwars"
 
-# repère pour savoir le côté (on ignore les zones WE)
+# Positions persistées par:
+#   /kaboom setspawn
+#   /kaboom setblue
+#   /kaboom setred
+# Laisser vide au début ; les commandes rempliront ces valeurs.
+spawns:
+  spawn:      # Ex: { world: tntwars, x: 0.5, y: 80.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
+    world: tntwars
+    x: 0.5
+    y: 101.0
+    z: 0.5
+    yaw: 0.33972168
+    pitch: 0.75575876
+  baseBlue:
+    world: tntwars
+    x: -51.594890463909884
+    y: 65.0
+    z: 65.40621724230765
+    yaw: -89.82861
+    pitch: -1.0545828
+  baseRed:
+    world: tntwars
+    x: 52.63207854417409
+    y: 65.0
+    z: 66.44070486100604
+    yaw: 90.17978
+    pitch: -1.0540555
+
+# Repère simple pour distinguer les côtés (X < middleX = Blue-side, X >= middleX = Red-side)
+# Si tu veux l'auto-calc, mets ici la moyenne de baseBlue.x et baseRed.x.
 field:
   middleX: 0
 
+# Item de HUB en LOBBY (clic droit ouvre le menu d'équipes)
 lobby:
   joinItem:
     material: COMPASS
@@ -22,15 +53,29 @@ lobby:
     slot: 4
 
 rules:
+  # Nombre de vies par joueur au début de chaque partie
   livesPerPlayer: 3
+
+  # Durée max d'une partie (en secondes)
   matchDurationSeconds: 1200
+
+  # Freeze au début (bloque le déplacement pendant le décompte)
   freezeOnStartSeconds: 5
+
+  # Pas d'effet ici (on clear les invs au start), laissé pour compat éventuelle
   allowKeepInventory: false
+
+  # Cap par équipe (5v5)
   maxPlayersPerTeam: 5
+
+  # Vérifier l'équilibrage avant /kaboom start
   requireTeamsBalanced: true
 
 gameplay:
+  # Faim infinie (désactive la baisse)
   infiniteHunger: true
+
+  # Seuil "void" (si joueur passe sous cette Y → TP base et -1 vie, sans écran de mort)
   voidKillY: 50
 
 scoreboard:
@@ -38,6 +83,8 @@ scoreboard:
   showTimer: true
   sponsorFooter: "Sponsor: IrixiaGroup.ch"
 
+# Kits disponibles (commande /kit <nom>)
+# "simple" est donné automatiquement au start si giveOnStart: true
 kits:
   simple:
     giveOnStart: true
@@ -50,13 +97,18 @@ kits:
       - WATER_BUCKET:1
       - STONE:64
       - IRON_PICKAXE:1
+
   tnt:
     items: [TNT:48, REDSTONE:64, REDSTONE_REPEATER:16, LEVER:4, STONE:64]
+
   pioche:
     items: [IRON_PICKAXE:1, DIAMOND_PICKAXE:1]
+
   redstone:
     items: [REDSTONE:64, REDSTONE_TORCH:16, REDSTONE_REPEATER:16, COMPARATOR:8, LEVER:4]
+
   blocks:
     items: [STONE:128, OBSIDIAN:32, SAND:32, GLASS:32]
+
   water:
     items: [WATER_BUCKET:1, BUCKET:2]
