@@ -78,6 +78,9 @@ gameplay:
   # Seuil "void" (si joueur passe sous cette Y → TP base et -1 vie, sans écran de mort)
   voidKillY: 50
 
+  # Donner de l'armure aux joueurs (couleur selon équipe)
+  teamArmor: true
+
 scoreboard:
   enabled: true
   showTimer: true

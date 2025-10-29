@@ -3,10 +3,12 @@ package ch.jmcommand.kaboomcuplesa.team;
 import ch.jmcommand.kaboomcuplesa.KaboomCupLesa;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
-import org.bukkit.scoreboard.Team;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.scoreboard.*;
 
 public class NametagService {
 
@@ -18,7 +20,7 @@ public class NametagService {
     public NametagService(KaboomCupLesa p){
         this.plugin = p;
         ScoreboardManager sm = Bukkit.getScoreboardManager();
-        this.sb = sm.getMainScoreboard(); // main → compatible TAB plugin
+        this.sb = sm.getMainScoreboard();
 
         Team bt = sb.getTeam("KAB_BLUE");
         if (bt==null) bt = sb.registerNewTeam("KAB_BLUE");
@@ -36,7 +38,6 @@ public class NametagService {
     }
 
     public void apply(Player p, TeamColor color){
-        // retire d'abord
         blueTeam.removeEntry(p.getName());
         redTeam.removeEntry(p.getName());
 
@@ -45,13 +46,48 @@ public class NametagService {
         } else if (color==TeamColor.RED){
             redTeam.addEntry(p.getName());
         }
-        // fallback tablist si besoin
         p.setPlayerListName((color==TeamColor.BLUE? ChatColor.BLUE: ChatColor.RED) + p.getName());
+
+        // équipe -> armure (si activée)
+        if (plugin.getConfig().getBoolean("gameplay.teamArmor", true)){
+            equipArmor(p, color);
+        }
     }
 
     public void clear(Player p){
         blueTeam.removeEntry(p.getName());
         redTeam.removeEntry(p.getName());
         p.setPlayerListName(p.getName());
+        // enlève l’armure d’équipe si activée
+        if (plugin.getConfig().getBoolean("gameplay.teamArmor", true)){
+            unequipArmor(p);
+        }
+    }
+
+    private ItemStack dyed(Material mat, Color c){
+        ItemStack it = new ItemStack(mat, 1);
+        LeatherArmorMeta meta = (LeatherArmorMeta) it.getItemMeta();
+        meta.setColor(c);
+        it.setItemMeta(meta);
+        return it;
+    }
+
+    public void equipArmor(Player p, TeamColor color){
+        Color c = (color==TeamColor.BLUE) ? Color.BLUE : Color.RED;
+        ItemStack chest = dyed(Material.LEATHER_CHESTPLATE, c);
+        ItemStack legs  = dyed(Material.LEATHER_LEGGINGS, c);
+        ItemStack boots = dyed(Material.LEATHER_BOOTS, c);
+        // On n’écrase pas un stuff déjà présent important ; ici on remplace pour la lisibilité
+        p.getInventory().setChestplate(chest);
+        p.getInventory().setLeggings(legs);
+        p.getInventory().setBoots(boots);
+    }
+
+    public void unequipArmor(Player p){
+        // On enlève seulement si c’est du cuir (notre set)
+        var inv = p.getInventory();
+        if (inv.getChestplate()!=null && inv.getChestplate().getType()==Material.LEATHER_CHESTPLATE) inv.setChestplate(null);
+        if (inv.getLeggings()!=null && inv.getLeggings().getType()==Material.LEATHER_LEGGINGS) inv.setLeggings(null);
+        if (inv.getBoots()!=null && inv.getBoots().getType()==Material.LEATHER_BOOTS) inv.setBoots(null);
     }
 }
