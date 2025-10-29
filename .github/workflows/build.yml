@@ -1,0 +1,99 @@
+name: Build & Release KaboomCupLesa
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Get project version from pom.xml
+        id: get_version
+        run: |
+          version=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Build with Maven
+        run: mvn -B -q -DskipTests package
+
+      - name: Upload Artifact (JAR)
+        uses: actions/upload-artifact@v4
+        with:
+          name: KaboomCupLesa-${{ steps.get_version.outputs.version }}
+          path: |
+            target/KaboomCupLesa*.jar
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Get project version from pom.xml
+        id: get_version
+        run: |
+          version=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Download artifact from build
+        uses: actions/download-artifact@v4
+        with:
+          name: KaboomCupLesa-${{ steps.get_version.outputs.version }}
+
+      - name: Create Git tag (if not exists)
+        shell: bash
+        run: |
+          TAG="v${{ steps.get_version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping tag creation."
+          else
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Create Release and upload jar
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: KaboomCupLesa v${{ steps.get_version.outputs.version }}
+          body: |
+            Automatic build for **KaboomCupLesa** version **v${{ steps.get_version.outputs.version }}**.
+            - Java: 17 (Temurin)
+            - Paper API: 1.20.1 (provided)
+            - Built via GitHub Actions
+          files: |
+            *.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
