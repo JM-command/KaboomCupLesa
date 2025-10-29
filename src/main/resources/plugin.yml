@@ -2,6 +2,26 @@ name: KaboomCupLesa
 version: '${project.version}'
 main: ch.jmcommand.kaboomcuplesa.KaboomCupLesa
 api-version: '1.20'
-authors: [JM_command (IrixiaGroup.ch)]
-description: Mini-jeu TNT Wars 5v5 pour LesA.Teliers.com — animé par JM_command
+authors: [ "JM_command (IrixiaGroup.ch)" ]
 website: https://IrixiaGroup.ch
+description: "Mini-jeu TNT Wars 5v5 pour LesA.Teliers.com — animé par JM_command"
+prefix: "KaboomCup"
+softdepend: [WorldEdit]
+
+
+commands:
+  menu:
+    description: Ouvre le menu de choix d'équipe (Bleu/Rouge)
+    usage: /menu
+  kaboom:
+    description: Commandes admin KaboomCup (start, pause, play, stop, force, setspawn, setblue, setred, reload)
+    usage: /kaboom <start|pause|play|stop|force|setspawn|setblue|setred|reload>
+    permission: kaboom.admin
+  kit:
+    description: Donne un kit prédéfini
+    usage: /kit <simple|tnt|pioche|redstone|block|water>
+
+permissions:
+  kaboom.admin:
+    description: Accès aux commandes administrateur de KaboomCup
+    default: op

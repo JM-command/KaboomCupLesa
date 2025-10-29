@@ -1,4 +1,5 @@
 package ch.jmcommand.kaboomcuplesa.game;
 
-public class GameState {
+public enum GameState {
+    LOBBY, RUNNING, PAUSED
 }
