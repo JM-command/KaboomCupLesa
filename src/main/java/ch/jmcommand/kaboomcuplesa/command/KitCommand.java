@@ -1,20 +1,19 @@
 package ch.jmcommand.kaboomcuplesa.command;
 
 import ch.jmcommand.kaboomcuplesa.KaboomCupLesa;
-import ch.jmcommand.kaboomcuplesa.game.GameState;
-import ch.jmcommand.kaboomcuplesa.ui.TeamMenu;
+import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class MenuCommand implements CommandExecutor {
+public class KitCommand implements CommandExecutor {
 
     private final KaboomCupLesa plugin;
-    private final TeamMenu menu;
+    private final KitService kits;
 
-    public MenuCommand(KaboomCupLesa plugin, TeamMenu menu){
-        this.plugin = plugin; this.menu = menu;
+    public KitCommand(KaboomCupLesa plugin, KitService kits){
+        this.plugin = plugin; this.kits = kits;
     }
 
     @Override
@@ -24,11 +23,12 @@ public class MenuCommand implements CommandExecutor {
             return true;
         }
         Player p = (Player) sender;
-        if (plugin.game().state() == GameState.RUNNING){
-            p.sendMessage(plugin.color("&cLe menu est désactivé pendant la partie."));
+        if (args.length < 1){
+            p.sendMessage(plugin.color("&7Usage: &f/kit &7<simple|tnt|pioche|redstone|blocks|water>"));
             return true;
         }
-        menu.open(p);
+        String key = args[0].toLowerCase();
+        kits.giveKit(p, key);
         return true;
     }
 }

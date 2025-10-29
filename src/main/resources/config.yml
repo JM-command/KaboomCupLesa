@@ -8,69 +8,11 @@ meta:
   author: "JM_command (IrixiaGroup.ch)"
   sponsor: "IrixiaGroup.ch"
   website: "https://IrixiaGroup.ch"
-  versionNotice: "Ne pas modifier: la version affichée vient du plugin.yml (${project.version})"
 
-# Nom du monde de jeu (VOID). Tu peux garder "tntwars"
 world: "tntwars"
 
-# Positions (seront écrites aussi via /kaboom setspawn|setblue|setred)
-spawn:
-  x: 0.0
-  y: 80.0
-  z: 0.0
-  yaw: 0.0
-  pitch: 0.0
-
-baseBlue:
-  x: -60.0
-  y: 80.0
-  z: 0.0
-  yaw: 0.0
-  pitch: 0.0
-
-baseRed:
-  x: 60.0
-  y: 80.0
-  z: 0.0
-  yaw: 180.0
-  pitch: 0.0
-
-
-rules:
-  livesPerPlayer: 3           # 3 vies par joueur
-  matchDurationSeconds: 1200  # 20 min (mettre 900 pour 15 min)
-  freezeOnStartSeconds: 5     # Freeze avant le go
-  allowKeepInventory: false   # Si true: les enfants gardent l'inventaire en mourant
-  countWallBreaks: false      # Toujours false ici: les blocs cassés dans wallZone ne comptent PAS
-  maxPlayersPerTeam: 5        # Sécurité utile pour atelier
-  requireTeamsBalanced: true  # Option: empêche start si 6v4 (ex.)
-
-# faim infinie
-gameplay:
-  infiniteHunger: true
-  voidKillY: 50   # si <= 50 → on considère "tombé dans le vide" : TP base + -1 vie
-
-scoreboard:
-  enabled: true
-  showTimer: true
-  sponsorFooter: "Sponsor: IrixiaGroup.ch"
-
-league:
-  # Tu mets à la main chaque jeudi (pas d’auto-reset de map dans le plugin)
-  week: 1
-  points:
-    blue: 0
-    red: 0
-
-# Logs côté console
-logging:
-  prefix: "KaboomCup"
-  debug: false
-
-
+# repère pour savoir le côté (on ignore les zones WE)
 field:
-  # si tu veux, je peux déduire automatiquement à partir des bases;
-  # plus simple et safe: on fixe le milieu X pour séparer les camps
   middleX: 0
 
 lobby:
@@ -78,6 +20,23 @@ lobby:
     material: COMPASS
     name: "&eKaboomCup &7» &fChoisir une équipe"
     slot: 4
+
+rules:
+  livesPerPlayer: 3
+  matchDurationSeconds: 1200
+  freezeOnStartSeconds: 5
+  allowKeepInventory: false
+  maxPlayersPerTeam: 5
+  requireTeamsBalanced: true
+
+gameplay:
+  infiniteHunger: true
+  voidKillY: 50
+
+scoreboard:
+  enabled: true
+  showTimer: true
+  sponsorFooter: "Sponsor: IrixiaGroup.ch"
 
 kits:
   simple:
@@ -97,7 +56,7 @@ kits:
     items: [IRON_PICKAXE:1, DIAMOND_PICKAXE:1]
   redstone:
     items: [REDSTONE:64, REDSTONE_TORCH:16, REDSTONE_REPEATER:16, COMPARATOR:8, LEVER:4]
-  block:
+  blocks:
     items: [STONE:128, OBSIDIAN:32, SAND:32, GLASS:32]
   water:
     items: [WATER_BUCKET:1, BUCKET:2]

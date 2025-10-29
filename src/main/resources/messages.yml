@@ -45,7 +45,7 @@ errors:
   onlyPlayers: "&cCette commande est réservée aux joueurs."
   gameNotRunning: "&cLa partie n'est pas en cours."
   gameAlreadyRunning: "&cUne partie est déjà en cours."
-  invalidArgs: "&cArgument invalide."
+  invalidArgs: "&cArgument invalide."d
   playerOffline: "&cJoueur introuvable."
   teamRequired: "&cTu dois rejoindre une équipe: &7/menu"
   zonesNotSet: "&cLes zones ne sont pas toutes définies. Configure &eblueZone, redZone, wallZone&c."

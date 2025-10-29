@@ -1,14 +1,15 @@
 package ch.jmcommand.kaboomcuplesa;
 
 import ch.jmcommand.kaboomcuplesa.command.KaboomCommand;
+import ch.jmcommand.kaboomcuplesa.command.KitCommand;
 import ch.jmcommand.kaboomcuplesa.command.MenuCommand;
 import ch.jmcommand.kaboomcuplesa.game.GameManager;
+import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import ch.jmcommand.kaboomcuplesa.listener.*;
 import ch.jmcommand.kaboomcuplesa.scoreboard.Sidebar;
 import ch.jmcommand.kaboomcuplesa.team.NametagService;
 import ch.jmcommand.kaboomcuplesa.team.TeamManager;
 import ch.jmcommand.kaboomcuplesa.ui.TeamMenu;
-import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import ch.jmcommand.kaboomcuplesa.storage.LeagueStore;
 
 import org.bukkit.Bukkit;
@@ -28,16 +29,15 @@ public class KaboomCupLesa extends JavaPlugin {
 
     private static KaboomCupLesa instance;
 
-    // === Services / Managers accessibles partout ===
     private TeamManager teams;
     private GameManager game;
     private NametagService tags;
     private TeamMenu menu;
     private Sidebar sidebar;
     private KitService kits;
-    private LeagueStore league; // si tu veux garder les points “saison/semaine”
+    private LeagueStore league;
 
-    private FileConfiguration messages;   // messages.yml
+    private FileConfiguration messages;
     private final String logPrefix = "[KaboomCup] ";
 
     public static KaboomCupLesa get() { return instance; }
@@ -46,40 +46,36 @@ public class KaboomCupLesa extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        // Génère fichiers
         saveDefaultConfig();
         saveResourceIfNotExists("messages.yml");
         loadMessages();
 
         info("Plugin activé. Version: " + getDescription().getVersion());
-        info("Auteur: " + String.join(", ", getDescription().getAuthors()));
-        info("Site: " + getDescription().getWebsite());
 
-        // === Wiring (sans ZoneManager / sans WorldEdit) ===
         teams   = new TeamManager(this);
-        game    = new GameManager(this, teams, /*zones*/ null); // on passe null, plus de zones
+        game    = new GameManager(this, teams, null); // plus de ZoneManager
         tags    = new NametagService(this);
         menu    = new TeamMenu(this, teams);
         sidebar = new Sidebar(this, game);
         kits    = new KitService(this);
-        league  = new LeagueStore(this); // optionnel
+        league  = new LeagueStore(this);
 
-        // === Commands ===
-        KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, /*zones*/ null, tags, kits);
+        // Commands
+        KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, null, tags, kits);
         getCommand("kaboom").setExecutor(kaboomCmd);
         getCommand("kaboom").setTabCompleter(kaboomCmd);
-        getCommand("menu").setExecutor(new MenuCommand(menu));
+        getCommand("menu").setExecutor(new MenuCommand(this, menu));
+        getCommand("kit").setExecutor(new KitCommand(this, kits));
 
-        // === Listeners ===
+        // Listeners
         var pm = getServer().getPluginManager();
-        pm.registerEvents(new JoinListener(this, /*zones*/ null, teams, tags, kits), this); // donne l’item hub
+        pm.registerEvents(new JoinListener(this, null, teams, tags, kits), this);
         pm.registerEvents(new QuitListener(), this);
         pm.registerEvents(new DeathListener(game), this);
         pm.registerEvents(new InventoryListener(menu), this);
-        // plus de BlockBreakListener / ExplodeListener pour le scoring
-        pm.registerEvents(new HungerVoidListener(this, game), this); // faim infinie + gestion void
-        pm.registerEvents(new MenuLockListener(this, game), this);   // bloque /menu en RUNNING
-        pm.registerEvents(new HubItemListener(this, game, menu), this); // clic droit item hub
+        pm.registerEvents(new HungerVoidListener(this, game), this);
+        pm.registerEvents(new MenuLockListener(this, game), this);
+        pm.registerEvents(new HubItemListener(this, game, menu), this);
 
         info("Initialisation terminée.");
     }
@@ -89,7 +85,7 @@ public class KaboomCupLesa extends JavaPlugin {
         info("Plugin désactivé.");
     }
 
-    /* ==================== CONFIG / MESSAGES ==================== */
+    /* ========= CONFIG / MESSAGES ========= */
 
     public void reloadAll() {
         reloadConfig();
@@ -117,7 +113,7 @@ public class KaboomCupLesa extends JavaPlugin {
 
     public FileConfiguration messages() { return messages; }
 
-    /* ==================== TEXTE ==================== */
+    /* ========= TEXT ========= */
 
     public String color(String s) {
         if (s == null) return "";
@@ -143,17 +139,16 @@ public class KaboomCupLesa extends JavaPlugin {
         return color(messages().getString("prefix", "&eKaboomCup &7» ")) + msg(key);
     }
 
-    /* ==================== LOG ==================== */
+    /* ========= LOG ========= */
 
     public void info(String s)  { getLogger().info(logPrefix + s); }
     public void warn(String s)  { getLogger().warning(logPrefix + s); }
     public void error(String s) { getLogger().severe(logPrefix + s); }
 
-    /* ==================== Commande /kaboom (fallback simple) ==================== */
+    /* ========= Fallback /kaboom reload (au cas où) ========= */
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
         if (!command.getName().equalsIgnoreCase("kaboom")) return false;
-
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("kaboom.admin")) {
                 sender.sendMessage(color(messages().getString("errors.noPermission")));
@@ -163,7 +158,6 @@ public class KaboomCupLesa extends JavaPlugin {
             sender.sendMessage(color(messages().getString("admin.configReloaded")));
             return true;
         }
-
         sender.sendMessage(color(messages().getString("help.header")));
         for (String line : messages().getStringList("help.lines")) {
             sender.sendMessage(color(line
@@ -173,7 +167,7 @@ public class KaboomCupLesa extends JavaPlugin {
         return true;
     }
 
-    /* ==================== Accès utiles ==================== */
+    /* ========= Helpers ========= */
 
     public String gameWorldName() { return getConfig().getString("world", "tntwars"); }
 
@@ -182,7 +176,6 @@ public class KaboomCupLesa extends JavaPlugin {
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(msg));
     }
 
-    // Getters pour services si besoin ailleurs
     public TeamManager teams() { return teams; }
     public GameManager game() { return game; }
     public NametagService tags() { return tags; }

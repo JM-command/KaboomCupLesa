@@ -1,6 +1,8 @@
 package ch.jmcommand.kaboomcuplesa.listener;
 
 import ch.jmcommand.kaboomcuplesa.KaboomCupLesa;
+import ch.jmcommand.kaboomcuplesa.game.GameState;
+import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import ch.jmcommand.kaboomcuplesa.team.NametagService;
 import ch.jmcommand.kaboomcuplesa.team.TeamManager;
 import ch.jmcommand.kaboomcuplesa.zone.ZoneManager;
@@ -12,35 +14,35 @@ import org.bukkit.event.player.PlayerJoinEvent;
 public class JoinListener implements Listener {
 
     private final KaboomCupLesa plugin;
-    private final ZoneManager zones;
+    private final ZoneManager zones; // plus utilisé
     private final TeamManager teams;
     private final NametagService tags;
+    private final KitService kits;
 
-    public JoinListener(KaboomCupLesa plugin, ZoneManager zones, TeamManager teams, NametagService tags) {
+    public JoinListener(KaboomCupLesa plugin, ZoneManager zones, TeamManager teams, NametagService tags, KitService kits) {
         this.plugin = plugin;
         this.zones = zones;
         this.teams = teams;
         this.tags = tags;
+        this.kits = kits;
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        // pas de message global de join
         e.setJoinMessage(null);
 
-        // Hub d'attente + aventure
-        if (zones.spawn() != null) {
-            e.getPlayer().teleport(zones.spawn());
-            e.getPlayer().setGameMode(GameMode.ADVENTURE);
-            e.getPlayer().sendMessage(plugin.msg("misc.joinedLobby"));
+        // TP spawn si configuré
+        var sp = plugin.game().spawn();
+        if (sp != null) e.getPlayer().teleport(sp);
+        e.getPlayer().setGameMode(GameMode.ADVENTURE);
+
+        // Donner l'item hub si LOBBY
+        if (plugin.game().state() == GameState.LOBBY) {
+            kits.giveHubItem(e.getPlayer());
         }
 
-        // Si le joueur avait déjà une équipe (reload serveur par ex.), réappliquer la couleur TAB + nametag
-        var team = teams.get(e.getPlayer());
-        if (team != null) {
-            tags.apply(e.getPlayer(), team);
-        }
-
-
+        // Recolorer si déjà en team (reload, etc.)
+        var t = teams.get(e.getPlayer());
+        if (t != null) tags.apply(e.getPlayer(), t);
     }
 }
