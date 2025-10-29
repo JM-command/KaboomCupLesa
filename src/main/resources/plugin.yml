@@ -8,7 +8,6 @@ description: "Mini-jeu TNT Wars 5v5 pour LesA.Teliers.com — animé par JM_comm
 prefix: "KaboomCup"
 softdepend: [WorldEdit]
 
-
 commands:
   menu:
     description: Ouvre le menu de choix d'équipe (Bleu/Rouge)
@@ -19,7 +18,7 @@ commands:
     permission: kaboom.admin
   kit:
     description: Donne un kit prédéfini
-    usage: /kit <simple|tnt|pioche|redstone|block|water>
+    usage: /kit <simple|tnt|pioche|redstone|blocks|water>
 
 permissions:
   kaboom.admin:

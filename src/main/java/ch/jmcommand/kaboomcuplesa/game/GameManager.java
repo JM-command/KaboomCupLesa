@@ -67,7 +67,8 @@ public class GameManager {
     }
 
     public boolean isFreezeActive() {
-        return freezeActive && state != GameState.RUNNING; // freeze actif pendant le décompte ou pause
+        // freeze actif pendant le décompte ou en pause
+        return freezeActive && state != GameState.RUNNING;
     }
 
     private void setFreeze(boolean v) {
@@ -165,29 +166,37 @@ public class GameManager {
     }
 
     /* =========================================================
-     *                        ANTI-VOID
+     *                        ANTI-VOID & MORTS
      * ========================================================= */
 
     /** Chute dans le vide : -1 vie et TP base (sans écran de mort) */
     public void handleVoidFall(Player p, TeamColor team) {
         if (state != GameState.RUNNING) return;
+        decrementLifeAndRespawn(p, team, "&cTu as chuté ! &7Vies restantes: &e{left}");
+    }
 
+    /** Appelé par DeathListener : on gère -1 vie et respawn propre */
+    public void onPlayerDeath(Player p) {
+        if (state != GameState.RUNNING) return;
+        TeamColor t = teamOf(p);
+        if (t == null) return;
+        decrementLifeAndRespawn(p, t, "&cTu es mort ! &7Vies restantes: &e{left}");
+    }
+
+    private void decrementLifeAndRespawn(Player p, TeamColor team, String msgTemplate) {
         int left = (lives.getOrDefault(p.getUniqueId(), defaultLives)) - 1;
         lives.put(p.getUniqueId(), left);
 
         if (left > 0) {
-            // TP base
             Location base = (team == TeamColor.BLUE ? baseBlue() : baseRed());
             if (base != null) safeTeleport(p, base);
-            p.sendMessage(plugin.color("&cTu as chuté ! &7Vies restantes: &e" + left));
+            p.sendMessage(plugin.color(msgTemplate.replace("{left}", String.valueOf(left))));
         } else {
-            // Plus de vies → spectateur (ici simple TP spawn)
             p.sendMessage(plugin.color("&cPlus de vies. Tu es éliminé."));
             if (spawn != null) safeTeleport(p, spawn());
-            // Optionnel: mode spectateur, invisibilité, etc.
+            teams.setSpectator(p);
         }
 
-        // Option: condition de victoire si toute l’équipe n’a plus de joueurs vivants
         checkWinCondition();
     }
 
@@ -241,13 +250,12 @@ public class GameManager {
      *                        DIVERS
      * ========================================================= */
 
-    /** Appel tenu pour compat (ex: Sidebar appelait tickTimeoutCheck()) */
+    /** Compat (ancien Sidebar appelait tickTimeoutCheck()) */
     public void tickTimeoutCheck() {
-        // Géré par MatchTimer en interne – laissé volontairement vide pour compat.
+        // Géré par MatchTimer (no-op)
     }
 
     private void checkWinCondition() {
-        // Exemple simple : si une équipe n’a plus aucun joueur avec vie > 0 → l’autre gagne
         boolean blueAlive = teams.online(TeamColor.BLUE).stream()
                 .anyMatch(p -> lives.getOrDefault(p.getUniqueId(), defaultLives) > 0);
         boolean redAlive = teams.online(TeamColor.RED).stream()

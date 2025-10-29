@@ -45,9 +45,11 @@ public class Sidebar {
     }
 
     private void createLine(int score, String key){
-        String entry = "§" + Integer.toHexString(score);
-        Team team = sb.registerNewTeam("LINE_" + score);
-        team.addEntry(entry);
+        // IMPORTANT: utiliser le vrai caractère couleur pour éviter le "Â§"
+        String entry = "\u00A7" + Integer.toHexString(score);
+        Team team = sb.getTeam("LINE_" + score);
+        if (team == null) team = sb.registerNewTeam("LINE_" + score);
+        if (!team.hasEntry(entry)) team.addEntry(entry);
         obj.getScore(entry).setScore(score);
         lineTeams.put(key, team);
     }

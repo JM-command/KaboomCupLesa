@@ -6,7 +6,6 @@ import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import ch.jmcommand.kaboomcuplesa.team.NametagService;
 import ch.jmcommand.kaboomcuplesa.team.TeamColor;
 import ch.jmcommand.kaboomcuplesa.team.TeamManager;
-import ch.jmcommand.kaboomcuplesa.zone.ZoneManager; // conservé en param nullable, plus utilisé
 import org.bukkit.Location;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -19,15 +18,13 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
     private final KaboomCupLesa plugin;
     private final GameManager game;
     private final TeamManager teams;
-    private final ZoneManager zones; // null
     private final NametagService tags;
     private final KitService kits;
 
-    public KaboomCommand(KaboomCupLesa plugin, GameManager game, TeamManager teams, ZoneManager zones, NametagService tags, KitService kits) {
+    public KaboomCommand(KaboomCupLesa plugin, GameManager game, TeamManager teams, NametagService tags, KitService kits) {
         this.plugin = plugin;
         this.game = game;
         this.teams = teams;
-        this.zones = zones;
         this.tags = tags;
         this.kits = kits;
     }

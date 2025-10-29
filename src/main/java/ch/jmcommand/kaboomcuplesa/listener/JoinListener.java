@@ -5,7 +5,6 @@ import ch.jmcommand.kaboomcuplesa.game.GameState;
 import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import ch.jmcommand.kaboomcuplesa.team.NametagService;
 import ch.jmcommand.kaboomcuplesa.team.TeamManager;
-import ch.jmcommand.kaboomcuplesa.zone.ZoneManager;
 import org.bukkit.GameMode;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,14 +13,12 @@ import org.bukkit.event.player.PlayerJoinEvent;
 public class JoinListener implements Listener {
 
     private final KaboomCupLesa plugin;
-    private final ZoneManager zones; // plus utilisé
     private final TeamManager teams;
     private final NametagService tags;
     private final KitService kits;
 
-    public JoinListener(KaboomCupLesa plugin, ZoneManager zones, TeamManager teams, NametagService tags, KitService kits) {
+    public JoinListener(KaboomCupLesa plugin, TeamManager teams, NametagService tags, KitService kits) {
         this.plugin = plugin;
-        this.zones = zones;
         this.teams = teams;
         this.tags = tags;
         this.kits = kits;

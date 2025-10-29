@@ -10,16 +10,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 
-
 public class TeamMenu {
 
     private final KaboomCupLesa plugin;
     private final TeamManager teams;
     private final NametagService tags;
 
-    public TeamMenu(KaboomCupLesa p, TeamManager t){
-        this.plugin = p; this.teams = t;
-        this.tags = new ch.jmcommand.kaboomcuplesa.team.NametagService(p);
+    public TeamMenu(KaboomCupLesa p, TeamManager t, NametagService tags){
+        this.plugin = p; this.teams = t; this.tags = tags;
     }
 
     public void open(Player p){

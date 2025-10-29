@@ -45,7 +45,7 @@ errors:
   onlyPlayers: "&cCette commande est réservée aux joueurs."
   gameNotRunning: "&cLa partie n'est pas en cours."
   gameAlreadyRunning: "&cUne partie est déjà en cours."
-  invalidArgs: "&cArgument invalide."d
+  invalidArgs: "&cArgument invalide."
   playerOffline: "&cJoueur introuvable."
   teamRequired: "&cTu dois rejoindre une équipe: &7/menu"
   zonesNotSet: "&cLes zones ne sont pas toutes définies. Configure &eblueZone, redZone, wallZone&c."
@@ -62,7 +62,6 @@ help:
     - "&e/kaboom force <joueur> <blue|red> &7: forcer une équipe"
     - "&e/kaboom setspawn &7: enregistrer le hub d'attente"
     - "&e/kaboom setblue &7/ &esetred &7: enregistrer les bases"
-    - "&e/kaboom setzone <nom> &7: poser 2 coins de &eblueZone/redZone/wallZone/blueSupply/redSupply"
     - "&e/kaboom reload &7: recharger la config/messages"
 
 scoreboard:

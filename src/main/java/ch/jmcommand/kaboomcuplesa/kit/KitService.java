@@ -58,6 +58,7 @@ public class KitService {
         if (sec != null && sec.getBoolean("giveOnStart", true)){
             giveKit(p, "simple");
         }
+        // empêcher l’item hub de rester si un kit est donné au start (déjà clear côté GameManager)
     }
 
     public void giveHubItem(Player p){
@@ -78,10 +79,11 @@ public class KitService {
 
     public void clearHubItem(Player p){
         var name = plugin.color(plugin.getConfig().getString("lobby.joinItem.name", "&eKaboomCup &7» &fChoisir une équipe"));
-        p.getInventory().forEach(stack -> {
+        for (int i = 0; i < p.getInventory().getSize(); i++) {
+            ItemStack stack = p.getInventory().getItem(i);
             if (stack != null && stack.hasItemMeta() && name.equals(stack.getItemMeta().getDisplayName())){
-                stack.setAmount(0);
+                p.getInventory().setItem(i, new ItemStack(Material.AIR));
             }
-        });
+        }
     }
 }

@@ -55,13 +55,14 @@ public class KaboomCupLesa extends JavaPlugin {
         teams   = new TeamManager(this);
         game    = new GameManager(this, teams, null); // plus de ZoneManager
         tags    = new NametagService(this);
-        menu    = new TeamMenu(this, teams);
+        menu    = new TeamMenu(this, teams, tags);
         sidebar = new Sidebar(this, game);
         kits    = new KitService(this);
         league  = new LeagueStore(this);
 
         // Commands
-        KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, null, tags, kits);
+        KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, tags, kits);
+
         getCommand("kaboom").setExecutor(kaboomCmd);
         getCommand("kaboom").setTabCompleter(kaboomCmd);
         getCommand("menu").setExecutor(new MenuCommand(this, menu));
@@ -70,7 +71,7 @@ public class KaboomCupLesa extends JavaPlugin {
         // Listeners
         var pm = getServer().getPluginManager();
 
-        pm.registerEvents(new JoinListener(this, null, teams, tags, kits), this);
+        pm.registerEvents(new JoinListener(this, teams, tags, kits), this);
         pm.registerEvents(new InventoryListener(menu), this);
         pm.registerEvents(new HubItemListener(this, game, menu), this);
         pm.registerEvents(new HungerVoidListener(this, game), this);
