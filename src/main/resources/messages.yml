@@ -78,5 +78,10 @@ scoreboard:
   redLives: "&cRouge vies : &f{value}"
   sponsor: "&8{footer}"
 
+bossbar:
+  lobby: "&eKaboomCup &7» &fEn attente (&7/menu pour les équipes&f)"
+  paused: "&eKaboomCup &7» &ePAUSE &7— &f/kaboom play pour reprendre"
+  running: "&eKaboomCup &7» &aEn jeu &7— &f{mm}:{ss}"
+
 misc:
   joinedLobby: "&7Bienvenue au hub. Ouvre &e/menu &7pour choisir une équipe."
