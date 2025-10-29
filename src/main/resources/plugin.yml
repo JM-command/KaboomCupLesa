@@ -1,0 +1,7 @@
+name: KaboomCupLesa
+version: '${project.version}'
+main: ch.jmcommand.kaboomcuplesa.KaboomCupLesa
+api-version: '1.20'
+authors: [JM_command (IrixiaGroup.ch)]
+description: Mini-jeu TNT Wars 5v5 pour LesA.Teliers.com — animé par JM_command
+website: https://IrixiaGroup.ch
