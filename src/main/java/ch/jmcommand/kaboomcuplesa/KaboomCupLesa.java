@@ -69,13 +69,16 @@ public class KaboomCupLesa extends JavaPlugin {
 
         // Listeners
         var pm = getServer().getPluginManager();
+
         pm.registerEvents(new JoinListener(this, null, teams, tags, kits), this);
-        pm.registerEvents(new QuitListener(), this);
-        pm.registerEvents(new DeathListener(game), this);
         pm.registerEvents(new InventoryListener(menu), this);
-        pm.registerEvents(new HungerVoidListener(this, game), this);
-        pm.registerEvents(new MenuLockListener(this, game), this);
         pm.registerEvents(new HubItemListener(this, game, menu), this);
+        pm.registerEvents(new HungerVoidListener(this, game), this);
+        pm.registerEvents(new FreezeMoveListener(game), this);
+        pm.registerEvents(new MenuLockListener(this, game), this);
+        pm.registerEvents(new DeathListener(game), this);
+        pm.registerEvents(new QuitListener(), this);
+
 
         info("Initialisation terminée.");
     }
