@@ -1,6 +1,5 @@
 # ============================================================
-# KaboomCup Lesa - MESSAGES
-# Utilise les codes couleurs '&' (ex: &a, &c). Ils seront traduits en jeu.
+# KaboomCup Lesa - MESSAGES (FR) - By JM_command
 # ============================================================
 
 prefix: "&eKaboomCup &7» "
@@ -22,22 +21,20 @@ gui:
 
 admin:
   startCountdown: "&7Démarrage dans &e{seconds}s&7…"
-  go: "&aGO! &7Construisez vos canons et tirez !"
+  go: "&aGO ! &7Construisez vos canons et tirez !"
   paused: "&ePartie mise en pause."
   resumed: "&aPartie reprise."
   forcedTeam: "&7{player} a été assigné à &l{team}&7."
   setSpawn: "&aSpawn enregistré."
   setBlue: "&aBase &9BLEUE &aenregistrée."
   setRed: "&aBase &cROUGE &aenregistrée."
-  zoneFirstPoint: "&7Premier coin enregistré pour &e{zone}&7. Re-exécute la commande au second coin."
-  zoneSaved: "&aZone &e{zone} &aenregistrée."
   configReloaded: "&aConfiguration rechargée."
 
 announce:
-  blueWinsElim: "&9BLEU &agagne &7(l'équipe rouge est éliminée)!"
-  redWinsElim: "&cROUGE &agagne &7(l'équipe bleue est éliminée)!"
-  timeoutWinner: "&6Temps écoulé! Gagnant: &l{team}&r"
-  livesLeft: "&7Vies restantes: &e{lives}"
+  blueWinsElim: "&9BLEU &agagne &7(l'équipe rouge est éliminée) !"
+  redWinsElim: "&cROUGE &agagne &7(l'équipe bleue est éliminée) !"
+  timeoutWinner: "&6Temps écoulé ! Gagnant : &l{team}&r"
+  livesLeft: "&7Vies restantes : &e{lives}"
   outOfLives: "&cPlus de vies. Tu deviens spectateur."
 
 errors:
@@ -45,33 +42,40 @@ errors:
   onlyPlayers: "&cCette commande est réservée aux joueurs."
   gameNotRunning: "&cLa partie n'est pas en cours."
   gameAlreadyRunning: "&cUne partie est déjà en cours."
-  invalidArgs: "&cArgument invalide."
+  invalidArgs: "&cArguments invalides."
   playerOffline: "&cJoueur introuvable."
-  teamRequired: "&cTu dois rejoindre une équipe: &7/menu"
-  zonesNotSet: "&cLes zones ne sont pas toutes définies. Configure &eblueZone, redZone, wallZone&c."
-  worldMissing: "&cMonde &e{world}&c introuvable."
+  teamRequired: "&cTu dois rejoindre une équipe : &7/menu"
   teamsUnbalanced: "&cÉquipes déséquilibrées. Ajuste via &e/menu &cou &e/kaboom force"
   teamFull: "&cCette équipe est pleine (&e{max}&c)."
   alreadyStartCountdown: "&cUn compte à rebours est déjà en cours."
+  menuDisabledInGame: "&cLe menu est désactivé pendant la partie."
 
 help:
-  header: "&6/kaboom &7– commandes admin"
+  header: "&6/kaboom &7— commandes admin"
   lines:
-    - "&e/kaboom start &7: lancer la partie (freeze {freeze}s, TP bases)"
-    - "&e/kaboom pause &7/ &eresume &7: pause / reprise"
-    - "&e/kaboom force <joueur> <blue|red> &7: forcer une équipe"
+    - "&e/kaboom start &7: lancer la partie (freeze {freeze}s, TP bases, clear inv + kit auto)"
+    - "&e/kaboom pause &7: mettre en pause"
+    - "&e/kaboom play &7: reprendre après pause"
+    - "&e/kaboom stop &7: arrêter et retourner au lobby"
+    - "&e/kaboom force &f<joueur> <blue|red> &7: forcer une équipe"
     - "&e/kaboom setspawn &7: enregistrer le hub d'attente"
-    - "&e/kaboom setblue &7/ &esetred &7: enregistrer les bases"
+    - "&e/kaboom setblue &7/ &e/kaboom setred &7: enregistrer les bases"
     - "&e/kaboom reload &7: recharger la config/messages"
+  kitHeader: "&6/kit &7— kits disponibles"
+  kitLines:
+    - "&e/kit simple &7: un peu de tout (auto au start si activé)"
+    - "&e/kit tnt &7: TNT, redstone & utilitaires"
+    - "&e/kit pioche &7: outils"
+    - "&e/kit redstone &7: redstone pur"
+    - "&e/kit blocks &7: blocs de construction"
+    - "&e/kit water &7: seaux et utilitaires d'eau"
 
 scoreboard:
   title: "&lKaboomCup Lesa"
-  blueDeaths: "&9Blue morts: &f{value}"
-  redDeaths: "&cRed  morts: &f{value}"
-  blueBlocks: "&9Blue blocs sur Rouge: &f{value}"
-  redBlocks: "&cRed  blocs sur Bleu:  &f{value}"
-  state: "&7Etat: &f{state}"
-  timer: "&7Temps: &f{mm}:{ss}"
+  state: "&7État : &f{state}"
+  timer: "&7Temps : &f{mm}:{ss}"
+  blueLives: "&9Bleu vies : &f{value}"
+  redLives: "&cRouge vies : &f{value}"
   sponsor: "&8{footer}"
 
 misc:
