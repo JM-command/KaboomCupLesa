@@ -27,19 +27,17 @@ public class JoinListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         e.setJoinMessage(null);
-
-        // TP spawn si configuré
         var sp = plugin.game().spawn();
         if (sp != null) e.getPlayer().teleport(sp);
         e.getPlayer().setGameMode(GameMode.ADVENTURE);
 
-        // Donner l'item hub si LOBBY
         if (plugin.game().state() == GameState.LOBBY) {
             kits.giveHubItem(e.getPlayer());
         }
 
-        // Recolorer si déjà en team (reload, etc.)
         var t = teams.get(e.getPlayer());
-        if (t != null) tags.apply(e.getPlayer(), t);
+        if (t != null) {
+            tags.apply(e.getPlayer(), t); // applique nametag + armure si activée
+        }
     }
 }
