@@ -1,16 +1,15 @@
 package ch.jmcommand.kaboomcuplesa;
 
-import ch.jmcommand.kaboomcuplesa.listener.*;
-import ch.jmcommand.kaboomcuplesa.zone.ZoneManager;
-import ch.jmcommand.kaboomcuplesa.team.TeamManager;
-import ch.jmcommand.kaboomcuplesa.team.NametagService;
-import ch.jmcommand.kaboomcuplesa.game.GameManager;
-import ch.jmcommand.kaboomcuplesa.ui.TeamMenu;
-import ch.jmcommand.kaboomcuplesa.scoreboard.Sidebar;
-import ch.jmcommand.kaboomcuplesa.storage.LeagueStore;
-
 import ch.jmcommand.kaboomcuplesa.command.KaboomCommand;
 import ch.jmcommand.kaboomcuplesa.command.MenuCommand;
+import ch.jmcommand.kaboomcuplesa.game.GameManager;
+import ch.jmcommand.kaboomcuplesa.listener.*;
+import ch.jmcommand.kaboomcuplesa.scoreboard.Sidebar;
+import ch.jmcommand.kaboomcuplesa.team.NametagService;
+import ch.jmcommand.kaboomcuplesa.team.TeamManager;
+import ch.jmcommand.kaboomcuplesa.ui.TeamMenu;
+import ch.jmcommand.kaboomcuplesa.kit.KitService;
+import ch.jmcommand.kaboomcuplesa.storage.LeagueStore;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -29,55 +28,60 @@ public class KaboomCupLesa extends JavaPlugin {
 
     private static KaboomCupLesa instance;
 
-    private FileConfiguration messages;   // messages.yml
-    private String logPrefix = "[KaboomCup] ";
+    // === Services / Managers accessibles partout ===
+    private TeamManager teams;
+    private GameManager game;
+    private NametagService tags;
+    private TeamMenu menu;
+    private Sidebar sidebar;
+    private KitService kits;
+    private LeagueStore league; // si tu veux garder les points “saison/semaine”
 
-    public static KaboomCupLesa get() {
-        return instance;
-    }
+    private FileConfiguration messages;   // messages.yml
+    private final String logPrefix = "[KaboomCup] ";
+
+    public static KaboomCupLesa get() { return instance; }
 
     @Override
     public void onEnable() {
         instance = this;
 
-        // Génère config.yml si absent
+        // Génère fichiers
         saveDefaultConfig();
-
-        // Génère messages.yml si absent
         saveResourceIfNotExists("messages.yml");
-
-        // Charge messages.yml
         loadMessages();
 
-        // Log de démarrage
         info("Plugin activé. Version: " + getDescription().getVersion());
         info("Auteur: " + String.join(", ", getDescription().getAuthors()));
         info("Site: " + getDescription().getWebsite());
 
-        // === WIRING (instances propres) ===
-        ZoneManager zones   = new ZoneManager(this);
-        TeamManager teams   = new TeamManager(this);
-        GameManager game    = new GameManager(this, teams, zones);
-        NametagService tags = new NametagService(this);
-        TeamMenu menu       = new TeamMenu(this, teams);
-        Sidebar side        = new Sidebar(this, game);
-        LeagueStore league  = new LeagueStore(this); // optionnel, pour gérer points semaine
+        // === Wiring (sans ZoneManager / sans WorldEdit) ===
+        teams   = new TeamManager(this);
+        game    = new GameManager(this, teams, /*zones*/ null); // on passe null, plus de zones
+        tags    = new NametagService(this);
+        menu    = new TeamMenu(this, teams);
+        sidebar = new Sidebar(this, game);
+        kits    = new KitService(this);
+        league  = new LeagueStore(this); // optionnel
 
-        // Commands
-        KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, zones, tags);
+        // === Commands ===
+        KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, /*zones*/ null, tags, kits);
         getCommand("kaboom").setExecutor(kaboomCmd);
         getCommand("kaboom").setTabCompleter(kaboomCmd);
         getCommand("menu").setExecutor(new MenuCommand(menu));
 
-        // Listeners
+        // === Listeners ===
         var pm = getServer().getPluginManager();
-        pm.registerEvents(new JoinListener(this, zones, teams, tags), this);
+        pm.registerEvents(new JoinListener(this, /*zones*/ null, teams, tags, kits), this); // donne l’item hub
         pm.registerEvents(new QuitListener(), this);
         pm.registerEvents(new DeathListener(game), this);
-        pm.registerEvents(new BlockBreakListener(), this); // désactivé pour le scoring (on compte via TNT)
         pm.registerEvents(new InventoryListener(menu), this);
-        pm.registerEvents(new ExplodeListener(teams, game), this);
+        // plus de BlockBreakListener / ExplodeListener pour le scoring
+        pm.registerEvents(new HungerVoidListener(this, game), this); // faim infinie + gestion void
+        pm.registerEvents(new MenuLockListener(this, game), this);   // bloque /menu en RUNNING
+        pm.registerEvents(new HubItemListener(this, game, menu), this); // clic droit item hub
 
+        info("Initialisation terminée.");
     }
 
     @Override
@@ -85,9 +89,7 @@ public class KaboomCupLesa extends JavaPlugin {
         info("Plugin désactivé.");
     }
 
-    /* ---------------------------------------------------------
-     * Helpers CONFIG / MESSAGES
-     * --------------------------------------------------------- */
+    /* ==================== CONFIG / MESSAGES ==================== */
 
     public void reloadAll() {
         reloadConfig();
@@ -113,13 +115,9 @@ public class KaboomCupLesa extends JavaPlugin {
         }
     }
 
-    public FileConfiguration messages() {
-        return messages;
-    }
+    public FileConfiguration messages() { return messages; }
 
-    /* ---------------------------------------------------------
-     * Helpers TEXTE
-     * --------------------------------------------------------- */
+    /* ==================== TEXTE ==================== */
 
     public String color(String s) {
         if (s == null) return "";
@@ -145,30 +143,15 @@ public class KaboomCupLesa extends JavaPlugin {
         return color(messages().getString("prefix", "&eKaboomCup &7» ")) + msg(key);
     }
 
-    /* ---------------------------------------------------------
-     * Log helpers
-     * --------------------------------------------------------- */
+    /* ==================== LOG ==================== */
 
-    public void info(String s) {
-        getLogger().info(logPrefix + s);
-    }
+    public void info(String s)  { getLogger().info(logPrefix + s); }
+    public void warn(String s)  { getLogger().warning(logPrefix + s); }
+    public void error(String s) { getLogger().severe(logPrefix + s); }
 
-    public void warn(String s) {
-        getLogger().warning(logPrefix + s);
-    }
-
-    public void error(String s) {
-        getLogger().severe(logPrefix + s);
-    }
-
-    /* ---------------------------------------------------------
-     * Commande /kaboom (temporaire)
-     * Pour l’instant: juste /kaboom reload
-     * On branchera plus tard sur la vraie KaboomCommand
-     * --------------------------------------------------------- */
+    /* ==================== Commande /kaboom (fallback simple) ==================== */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // On ne capte que la commande "kaboom" déclarée dans plugin.yml
         if (!command.getName().equalsIgnoreCase("kaboom")) return false;
 
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
@@ -181,7 +164,6 @@ public class KaboomCupLesa extends JavaPlugin {
             return true;
         }
 
-        // Afficher une aide minimale (vraie aide dans messages.yml)
         sender.sendMessage(color(messages().getString("help.header")));
         for (String line : messages().getStringList("help.lines")) {
             sender.sendMessage(color(line
@@ -191,21 +173,21 @@ public class KaboomCupLesa extends JavaPlugin {
         return true;
     }
 
-    /* ---------------------------------------------------------
-     * Méthodes futures (stubs) – on branchera plus tard
-     * --------------------------------------------------------- */
+    /* ==================== Accès utiles ==================== */
 
-    // private void registerCommands() { ... }
-    // private void registerListeners() { ... }
+    public String gameWorldName() { return getConfig().getString("world", "tntwars"); }
 
-    // Exemple d’accès monde depuis config (quand on codera ZoneManager)
-    public String gameWorldName() {
-        return getConfig().getString("world", "tntwars");
-    }
-
-    // Exemple de broadcast avec préfixe
     public void broadcast(String msgKey) {
         String msg = msg(msgKey);
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(msg));
     }
+
+    // Getters pour services si besoin ailleurs
+    public TeamManager teams() { return teams; }
+    public GameManager game() { return game; }
+    public NametagService tags() { return tags; }
+    public TeamMenu menu() { return menu; }
+    public Sidebar sidebar() { return sidebar; }
+    public KitService kits() { return kits; }
+    public LeagueStore league() { return league; }
 }
