@@ -80,6 +80,9 @@ gameplay:
 
   # Dégâts/casse côté propre (false = pas de dégâts/casse côté propre)
   friendlyFireTNT: false # false = pas de dégâts/casse côté propre
+  
+  # Donner de l'armure aux joueurs (couleur selon équipe)
+  teamArmor: true
 
 scoreboard:
   enabled: true
