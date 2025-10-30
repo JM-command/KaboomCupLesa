@@ -145,6 +145,13 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // /kaboom league reset
+        if (args.length == 2 && args[1].equalsIgnoreCase("reset")) {
+            plugin.league().reset();
+            sender.sendMessage(plugin.msg("league.resetOk"));
+            return true;
+        }
+
         // /kaboom league week <n>
         if (args.length >= 3 && args[1].equalsIgnoreCase("week")) {
             int n;
@@ -203,7 +210,7 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
 
         // /kaboom league ...
         if (args.length == 2 && args[0].equalsIgnoreCase("league")) {
-            return List.of("week", "add");
+            return List.of("week", "add", "reset");
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("league") && args[1].equalsIgnoreCase("add")) {
             return List.of("blue", "red");

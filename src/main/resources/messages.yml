@@ -105,4 +105,6 @@ league:
   leaderBlue: "&9Bleu en tête &7({points} pts)"
   leaderRed: "&cRouge en tête &7({points} pts)"
   leaderTie: "&fÉgalité &7(bleu/rouge)"
+  resetOk: "&aPoints de ligue remis à &f0&a pour bleu et rouge."
+
 
