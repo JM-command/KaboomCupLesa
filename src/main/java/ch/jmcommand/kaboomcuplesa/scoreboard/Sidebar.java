@@ -3,6 +3,7 @@ package ch.jmcommand.kaboomcuplesa.scoreboard;
 import ch.jmcommand.kaboomcuplesa.KaboomCupLesa;
 import ch.jmcommand.kaboomcuplesa.game.GameManager;
 import ch.jmcommand.kaboomcuplesa.game.GameState;
+import ch.jmcommand.kaboomcuplesa.team.TeamColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
@@ -23,17 +24,15 @@ public class Sidebar {
         this.plugin = plugin;
         this.game = game;
 
-        // IMPORTANT : on prend le MAIN scoreboard pour ne PAS casser les nametags
         ScoreboardManager sm = Bukkit.getScoreboardManager();
-        this.sb = sm.getMainScoreboard();
+        this.sb = sm.getNewScoreboard();
+        this.obj = sb.registerNewObjective(
+                "kaboom","dummy",
+                plugin.color("&lKaboomCup Lesa")
+        );
+        this.obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        Objective tmp = sb.getObjective("kaboom_main");
-        if (tmp == null) {
-            tmp = sb.registerNewObjective("kaboom_main","dummy", plugin.color("&lKaboomCup Lesa"));
-            tmp.setDisplaySlot(DisplaySlot.SIDEBAR);
-        }
-        this.obj = tmp;
-
+        createLine(8, "L0");
         createLine(7, "L1");
         createLine(6, "L2");
         createLine(5, "L3");
@@ -49,12 +48,9 @@ public class Sidebar {
 
     private void createLine(int score, String key){
         String entry = "§" + Integer.toHexString(score);
-        Team team = sb.getTeam("KAB_LINE_" + score);
-        if (team == null) {
-            team = sb.registerNewTeam("KAB_LINE_" + score);
-            team.addEntry(entry);
-            obj.getScore(entry).setScore(score);
-        }
+        Team team = sb.registerNewTeam("LINE_" + score);
+        team.addEntry(entry);
+        obj.getScore(entry).setScore(score);
         lineTeams.put(key, team);
     }
 
@@ -76,23 +72,38 @@ public class Sidebar {
     public void update(){
         if (!plugin.getConfig().getBoolean("scoreboard.enabled", true)) return;
 
+        // league infos
+        int week = plugin.league().getWeek();
+        int bluePts = plugin.league().getPoints(TeamColor.BLUE);
+        int redPts  = plugin.league().getPoints(TeamColor.RED);
+        String leader;
+        if (bluePts == redPts) {
+            leader = plugin.msg("league.leaderTie");
+        } else if (bluePts > redPts) {
+            leader = plugin.msg("league.leaderBlue", Map.of("points", String.valueOf(bluePts)));
+        } else {
+            leader = plugin.msg("league.leaderRed", Map.of("points", String.valueOf(redPts)));
+        }
+
         if (game.state() == GameState.LOBBY || game.state() == GameState.PAUSED){
-            set("L1", "&7Etat: &f" + game.state().name());
-            set("L2", "&9Blue joueurs: &f" + game.teamSizeBlue());
-            set("L3", "&cRed  joueurs: &f" + game.teamSizeRed());
-            set("L4", "&7Tip: &fClique la boussole &7(ou /menu)");
-            set("L5", " ");
+            set("L0", plugin.msg("league.sidebarWeek", Map.of("week", String.valueOf(week))));
+            set("L1", leader);
+            set("L2", "&7Etat: &f" + game.state().name());
+            set("L3", "&9Blue joueurs: &f" + game.teamSizeBlue());
+            set("L4", "&cRed  joueurs: &f" + game.teamSizeRed());
+            set("L5", "&7Tip: &fClique la boussole &7(ou /menu)");
             set("L6", plugin.color("&7" + plugin.getConfig().getString("scoreboard.sponsorFooter","")));
             set("L7", "");
         } else {
             int secs = game.secondsLeft();
             String mm = String.format("%02d", secs/60);
             String ss = String.format("%02d", secs%60);
-            set("L1", "&7Etat: &aRUNNING");
-            set("L2", plugin.getConfig().getBoolean("scoreboard.showTimer", true) ? "&7Timer: &f" + mm + ":" + ss : "");
-            set("L3", "&9Blue vies: &f" + game.livesStringBlue());
-            set("L4", "&cRed  vies: &f" + game.livesStringRed());
-            set("L5", " ");
+            set("L0", plugin.msg("league.sidebarWeek", Map.of("week", String.valueOf(week))));
+            set("L1", leader);
+            set("L2", "&7Etat: &aRUNNING");
+            set("L3", plugin.getConfig().getBoolean("scoreboard.showTimer", true) ? "&7Timer: &f" + mm + ":" + ss : "");
+            set("L4", "&9Blue vies: &f" + game.livesStringBlue());
+            set("L5", "&cRed  vies: &f" + game.livesStringRed());
             set("L6", plugin.color("&7" + plugin.getConfig().getString("scoreboard.sponsorFooter","")));
             set("L7", "");
         }
