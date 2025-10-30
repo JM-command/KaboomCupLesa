@@ -12,35 +12,19 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * GameManager – gestion centrale du mini-jeu :
- * - Etats : LOBBY / RUNNING / PAUSED
- * - Timer de match (start/pause/resume/stop)
- * - Freeze de départ
- * - Spawn/BaseBlue/BaseRed (persistés dans config.yml)
- * - Vies par joueur, élimination, réapparition
- * - Utilitaires pour le scoreboard
- */
 public class GameManager {
 
     private final KaboomCupLesa plugin;
     private final TeamManager teams;
 
-    // === Etats
     private GameState state = GameState.LOBBY;
-
-    // === Freeze
     private boolean freezeActive = false;
-
-    // === Timer de match
     private final MatchTimer timer;
 
-    // === Lieux
     private Location spawn;
     private Location baseBlue;
     private Location baseRed;
 
-    // === Vies par joueur
     private final Map<UUID, Integer> lives = new HashMap<>();
     private int defaultLives;
 
@@ -49,25 +33,16 @@ public class GameManager {
         this.teams = teams;
         this.timer = new MatchTimer(plugin, this);
 
-        // paramètres
         this.defaultLives = Math.max(1, plugin.getConfig().getInt("rules.livesPerPlayer", 3));
 
-        // Charger spawn/bases depuis config
         this.spawn    = loadLocation("spawns.spawn");
         this.baseBlue = loadLocation("spawns.baseBlue");
         this.baseRed  = loadLocation("spawns.baseRed");
     }
 
-    /* =========================================================
-     *                        ETAT DE JEU
-     * ========================================================= */
-
-    public GameState state() {
-        return state;
-    }
+    public GameState state() { return state; }
 
     public boolean isFreezeActive() {
-        // freeze actif pendant le décompte ou en pause
         return freezeActive && state != GameState.RUNNING;
     }
 
@@ -75,21 +50,18 @@ public class GameManager {
         this.freezeActive = v;
     }
 
-    public int secondsLeft() {
-        return timer.secondsLeft();
-    }
+    public int secondsLeft() { return timer.secondsLeft(); }
 
-    /* =========================================================
-     *                        ADMIN FLOW
-     * ========================================================= */
+    /* ===================== ADMIN FLOW ===================== */
 
-    /** Démarrage administrateur (gel + TP + clear + kits + timer) */
     public void adminStartMatch() {
         if (state != GameState.LOBBY) return;
+
         if (baseBlue == null || baseRed == null) {
             plugin.warn("Bases non définies. Utilise /kaboom setblue et /kaboom setred");
             return;
         }
+
         resetAllLivesToDefault();
 
         int freeze = Math.max(0, plugin.getConfig().getInt("rules.freezeOnStartSeconds", 5));
@@ -99,21 +71,17 @@ public class GameManager {
         new BukkitRunnable() {
             @Override
             public void run() {
-                boolean teamArmor = plugin.getConfig().getBoolean("gameplay.teamArmor", true);
-
                 for (Player p : teams.online(TeamColor.BLUE)) {
                     safeTeleport(p, baseBlue());
                     p.getInventory().clear();
                     plugin.kits().clearHubItem(p);
                     plugin.kits().giveStartKitIfConfigured(p);
-                    if (teamArmor) plugin.tags().equipArmor(p, TeamColor.BLUE);
                 }
                 for (Player p : teams.online(TeamColor.RED)) {
                     safeTeleport(p, baseRed());
                     p.getInventory().clear();
                     plugin.kits().clearHubItem(p);
                     plugin.kits().giveStartKitIfConfigured(p);
-                    if (teamArmor) plugin.tags().equipArmor(p, TeamColor.RED);
                 }
 
                 setFreeze(false);
@@ -126,7 +94,6 @@ public class GameManager {
         }.runTaskLater(plugin, freeze * 20L);
     }
 
-    /** Met en pause le match (freeze + timer pause) */
     public void adminPause() {
         if (state != GameState.RUNNING) return;
         state = GameState.PAUSED;
@@ -135,7 +102,6 @@ public class GameManager {
         Bukkit.broadcastMessage(plugin.color("&7[&eKaboom&7] &fPartie &ePAUSE"));
     }
 
-    /** Reprend après pause */
     public void adminResume() {
         if (state != GameState.PAUSED) return;
         state = GameState.RUNNING;
@@ -144,7 +110,6 @@ public class GameManager {
         Bukkit.broadcastMessage(plugin.color("&7[&eKaboom&7] &fPartie &aREPRISE"));
     }
 
-    /** Stoppe et retourne au lobby (TP spawn + item hub) */
     public void adminStop() {
         timer.stop();
         state = GameState.LOBBY;
@@ -155,40 +120,49 @@ public class GameManager {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 safeTeleport(p, spawn());
                 plugin.kits().giveHubItem(p);
-                if (plugin.getConfig().getBoolean("gameplay.teamArmor", true)) {
-                    plugin.tags().unequipArmor(p);
-                }
             }
         }
         Bukkit.broadcastMessage(plugin.color("&7[&eKaboom&7] &fPartie terminée."));
     }
 
-    /* =========================================================
-     *                        ANTI-VOID & MORTS
-     * ========================================================= */
+    /* ===================== ANTI-VOID + KILL MESSAGE ===================== */
 
-    /** Chute dans le vide : -1 vie et TP base (sans écran de mort) */
     public void handleVoidFall(Player p, TeamColor team) {
         if (state != GameState.RUNNING) return;
-        decrementLifeAndRespawn(p, team, "&cTu as chuté ! &7Vies restantes: &e{left}");
-    }
 
-    /** Appelé par DeathListener : on gère -1 vie et respawn propre */
-    public void onPlayerDeath(Player p) {
-        if (state != GameState.RUNNING) return;
-        TeamColor t = teamOf(p);
-        if (t == null) return;
-        decrementLifeAndRespawn(p, t, "&cTu es mort ! &7Vies restantes: &e{left}");
-    }
+        // On cherche si quelqu’un l’a frappé juste avant
+        UUID killerId = plugin.damageTracker() != null
+                ? plugin.damageTracker().getLastDamager(p.getUniqueId())
+                : null;
 
-    private void decrementLifeAndRespawn(Player p, TeamColor team, String msgTemplate) {
+        Player killer = (killerId == null ? null : plugin.getServer().getPlayer(killerId));
+        TeamColor killerTeam = (killer == null ? null : teams.get(killer));
+
         int left = (lives.getOrDefault(p.getUniqueId(), defaultLives)) - 1;
         lives.put(p.getUniqueId(), left);
+
+        // Message de kill AVANT TP
+        if (killer != null && killerTeam != null && killerTeam != team) {
+            // killer ≠ victime, et pas même équipe
+            String msg = plugin.msg("kills.voidPushed", Map.of(
+                    "killer", killer.getName(),
+                    "victim", p.getName()
+            ));
+            Bukkit.broadcastMessage(msg);
+        } else {
+            // chute solo
+            String msg = plugin.msg("kills.voidSolo", Map.of(
+                    "victim", p.getName()
+            ));
+            Bukkit.broadcastMessage(msg);
+        }
 
         if (left > 0) {
             Location base = (team == TeamColor.BLUE ? baseBlue() : baseRed());
             if (base != null) safeTeleport(p, base);
-            p.sendMessage(plugin.color(msgTemplate.replace("{left}", String.valueOf(left))));
+            p.setFallDistance(0f); // évite de reperdre des PV derrière
+            p.setHealth(Math.max(1.0, p.getHealth())); // petit safety
+            p.sendMessage(plugin.color("&cTu es tombé ! &7Vies restantes: &e" + left));
         } else {
             p.sendMessage(plugin.color("&cPlus de vies. Tu es éliminé."));
             if (spawn != null) safeTeleport(p, spawn());
@@ -198,32 +172,25 @@ public class GameManager {
         checkWinCondition();
     }
 
-    /* =========================================================
-     *                        SCOREBOARD HELPERS
-     * ========================================================= */
+    /* ===================== SCOREBOARD HELPERS ===================== */
 
     public int teamSizeBlue() { return teams.size(TeamColor.BLUE); }
     public int teamSizeRed()  { return teams.size(TeamColor.RED);  }
 
-    public TeamColor teamOf(Player p) {
-        return teams.get(p);
-    }
+    public TeamColor teamOf(Player p) { return teams.get(p); }
 
-    /** Représentation lisible des vies par équipe pour le scoreboard */
     public String livesStringBlue() { return livesStringFor(TeamColor.BLUE); }
     public String livesStringRed()  { return livesStringFor(TeamColor.RED);  }
 
     private String livesStringFor(TeamColor team) {
-        List<Player> ps = teams.online(team);
+        var ps = teams.online(team);
         if (ps.isEmpty()) return "-";
         return ps.stream()
                 .map(p -> p.getName() + ":" + lives.getOrDefault(p.getUniqueId(), defaultLives))
                 .collect(Collectors.joining(" "));
     }
 
-    /* =========================================================
-     *                        SPAWN / BASES
-     * ========================================================= */
+    /* ===================== SPAWN / BASES ===================== */
 
     public void setSpawn(Location l) {
         this.spawn = (l == null ? null : l.clone());
@@ -244,14 +211,7 @@ public class GameManager {
     public Location baseBlue() { return baseBlue == null ? null : baseBlue.clone(); }
     public Location baseRed()  { return baseRed == null ? null : baseRed.clone(); }
 
-    /* =========================================================
-     *                        DIVERS
-     * ========================================================= */
-
-    /** Compat (ancien Sidebar appelait tickTimeoutCheck()) */
-    public void tickTimeoutCheck() {
-        // Géré par MatchTimer (no-op)
-    }
+    /* ===================== VICTOIRE ===================== */
 
     private void checkWinCondition() {
         boolean blueAlive = teams.online(TeamColor.BLUE).stream()
@@ -261,7 +221,7 @@ public class GameManager {
 
         if (state == GameState.RUNNING && (!blueAlive || !redAlive)) {
             String msg = !blueAlive && !redAlive
-                    ? "&eEgalité !"
+                    ? "&eÉgalité !"
                     : (!blueAlive ? "&cRouge gagne !" : "&9Bleu gagne !");
             Bukkit.broadcastMessage(plugin.color("&7[&eKaboom&7] " + msg));
             adminStop();
@@ -282,9 +242,7 @@ public class GameManager {
         p.teleport(l);
     }
 
-    /* =========================================================
-     *                SERIALIZATION HELPERS (config)
-     * ========================================================= */
+    /* ===================== CONFIG I/O ===================== */
 
     private void saveLocation(String path, Location loc) {
         var cfg = plugin.getConfig();
@@ -315,13 +273,12 @@ public class GameManager {
         return new Location(world, x, y, z, yaw, pitch);
     }
 
-    /* =========================================================
-     *                     MATCH TIMER INTERNE
-     * ========================================================= */
+    /* ===================== MATCH TIMER INTERNE ===================== */
+
     private static class MatchTimer {
         private final KaboomCupLesa plugin;
         private final GameManager game;
-        private BukkitRunnable task;
+        private org.bukkit.scheduler.BukkitRunnable task;
         private int secondsLeft;
         private boolean running = false;
 
@@ -334,16 +291,13 @@ public class GameManager {
             stop();
             this.secondsLeft = secs;
             this.running = true;
-            this.task = new BukkitRunnable() {
+            this.task = new org.bukkit.scheduler.BukkitRunnable() {
                 @Override
                 public void run() {
                     if (!running) { cancel(); return; }
-                    // Si le jeu est en pause, on ne décrémente pas
                     if (game.state != GameState.RUNNING) return;
-
                     secondsLeft = Math.max(0, secondsLeft - 1);
                     if (secondsLeft <= 0) {
-                        // Fin de partie sur timeout
                         Bukkit.broadcastMessage(plugin.color("&7[&eKaboom&7] &fTemps écoulé."));
                         game.adminStop();
                         cancel();
@@ -353,14 +307,8 @@ public class GameManager {
             this.task.runTaskTimer(plugin, 20L, 20L);
         }
 
-        public void pause() {
-            this.running = false;
-        }
-
-        public void resume() {
-            this.running = true;
-        }
-
+        public void pause() { this.running = false; }
+        public void resume() { this.running = true; }
         public void stop() {
             this.running = false;
             if (this.task != null) {
@@ -369,7 +317,6 @@ public class GameManager {
             this.task = null;
             this.secondsLeft = 0;
         }
-
         public int secondsLeft() { return Math.max(0, secondsLeft); }
     }
 }

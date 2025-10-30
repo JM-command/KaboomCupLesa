@@ -34,6 +34,7 @@ public class KaboomCupLesa extends JavaPlugin {
     private KitService kits;
     private LeagueStore league;
     private BossBarService bossbar;
+    private DamageTrackerListener damageTracker;
 
     private FileConfiguration messages;
     private final String logPrefix = "[KaboomCup] ";
@@ -58,6 +59,8 @@ public class KaboomCupLesa extends JavaPlugin {
         kits    = new KitService(this);
         league  = new LeagueStore(this);
         bossbar = new BossBarService(this, game);
+        damageTracker = new DamageTrackerListener(this);
+
 
         // Commands
         KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, tags, kits);
@@ -79,6 +82,9 @@ public class KaboomCupLesa extends JavaPlugin {
         pm.registerEvents(new DeathListener(game), this);
         pm.registerEvents(new QuitListener(), this);
         pm.registerEvents(new TNTOwnershipListener(this, teams), this);
+        pm.registerEvents(new LobbyProtectionListener(this), this);
+        pm.registerEvents(damageTracker, this);
+
 
 
         info("Initialisation terminée.");
@@ -187,4 +193,5 @@ public class KaboomCupLesa extends JavaPlugin {
     public KitService kits() { return kits; }
     public LeagueStore league() { return league; }
     public BossBarService bossbar() { return bossbar; }
+    public DamageTrackerListener damageTracker() { return damageTracker;
 }

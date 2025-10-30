@@ -1,6 +1,7 @@
 package ch.jmcommand.kaboomcuplesa.command;
 
 import ch.jmcommand.kaboomcuplesa.KaboomCupLesa;
+import ch.jmcommand.kaboomcuplesa.game.GameState;
 import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -23,6 +24,13 @@ public class KitCommand implements CommandExecutor {
             return true;
         }
         Player p = (Player) sender;
+
+        // pas de /kit au lobby (sauf op)
+        if (plugin.game().state() != GameState.RUNNING && !p.hasPermission("kaboom.admin")) {
+            p.sendMessage(plugin.color("&cTu ne peux pas utiliser /kit au lobby."));
+            return true;
+        }
+
         if (args.length < 1){
             p.sendMessage(plugin.color("&7Usage: &f/kit &7<simple|tnt|pioche|redstone|blocks|water>"));
             return true;
