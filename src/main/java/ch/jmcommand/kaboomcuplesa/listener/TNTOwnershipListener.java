@@ -1,122 +1,113 @@
 package ch.jmcommand.kaboomcuplesa.listener;
 
 import ch.jmcommand.kaboomcuplesa.KaboomCupLesa;
-import ch.jmcommand.kaboomcuplesa.game.GameManager;
 import ch.jmcommand.kaboomcuplesa.team.TeamColor;
 import ch.jmcommand.kaboomcuplesa.team.TeamManager;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
-import io.papermc.paper.event.block.TNTPrimeEvent; // Paper API
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TNTOwnershipListener implements Listener {
 
     private final KaboomCupLesa plugin;
     private final TeamManager teams;
-    private final GameManager game;
+    private final NamespacedKey ownerKey;
 
-    // map temporaire: position block TNT placé -> équipe
-    private final Map<String, TeamColor> placedTNT = new HashMap<>();
+    // On stocke "qui a posé quel bloc de TNT" (coordonnées de bloc → UUID joueur)
+    private final Map<String, UUID> tntPlacedBy = new ConcurrentHashMap<>();
 
-    private final NamespacedKey OWNER_KEY;
-
-    public TNTOwnershipListener(KaboomCupLesa plugin, TeamManager teams, GameManager game){
+    public TNTOwnershipListener(KaboomCupLesa plugin, TeamManager teams) {
         this.plugin = plugin;
         this.teams = teams;
-        this.game = game;
-        this.OWNER_KEY = new NamespacedKey(plugin, "kaboom_owner_team");
+        this.ownerKey = new NamespacedKey(plugin, "tnt_owner");
     }
 
-    private String key(Block b){
-        var l = b.getLocation();
-        return l.getWorld().getName()+":"+l.getBlockX()+","+l.getBlockY()+","+l.getBlockZ();
+    // Clé stable "world@x:y:z" pour les locs de bloc
+    private String keyOf(Block b) {
+        Location l = b.getLocation();
+        return l.getWorld().getName() + "@" + l.getBlockX() + ":" + l.getBlockY() + ":" + l.getBlockZ();
     }
 
-    /** Au placement d'un bloc TNT, mémorise l'équipe du joueur */
-    @EventHandler public void onPlace(BlockPlaceEvent e){
-        if (e.getBlockPlaced()==null) return;
-        if (e.getBlockPlaced().getType()!= org.bukkit.Material.TNT) return;
-        TeamColor t = teams.get(e.getPlayer());
-        if (t==null) return;
-        placedTNT.put(key(e.getBlockPlaced()), t);
+    private String keyOf(Location l) {
+        return l.getWorld().getName() + "@" + l.getBlockX() + ":" + l.getBlockY() + ":" + l.getBlockZ();
     }
 
-    /** Quand la TNT est "primée", on transfère l'owner vers l'entité TNTPrimed */
-    @EventHandler public void onPrime(TNTPrimeEvent e){
-        Block b = e.getBlock();
-        TeamColor t = placedTNT.remove(key(b));
-        if (t == null) return;
-
-        Entity ent = e.getPrimedTnt();
-        if (ent instanceof TNTPrimed tnt){
-            // PDC tag
-            PersistentDataContainer pdc = tnt.getPersistentDataContainer();
-            pdc.set(OWNER_KEY, PersistentDataType.STRING, t.name());
-            // Nom custom (invisible) pour debug
-            tnt.customName(plugin.color((t == TeamColor.BLUE ? "&9BLUE" : "&cRED")));
-            tnt.setCustomNameVisible(false);
-        }
+    @EventHandler
+    public void onPlace(BlockPlaceEvent e) {
+        if (e.getBlockPlaced() == null) return;
+        if (e.getBlockPlaced().getType() != org.bukkit.Material.TNT) return;
+        // Mémorise le poseur de CE bloc de TNT
+        tntPlacedBy.put(keyOf(e.getBlockPlaced()), e.getPlayer().getUniqueId());
     }
 
-    /** Friendly-fire TNT côté propre: on supprime les blocks affectés si sur le même côté */
-    @EventHandler public void onExplode(EntityExplodeEvent e){
-        if (e.getEntityType()!= EntityType.PRIMED_TNT) return;
+    @EventHandler
+    public void onTntSpawn(EntitySpawnEvent e) {
+        Entity ent = e.getEntity();
+        if (!(ent instanceof TNTPrimed)) return;
 
-        boolean ffOff = !plugin.getConfig().getBoolean("gameplay.friendlyFireTNT", false) ? true : false;
-        if (!ffOff) return;
+        // Recherche un owner fiable:
+        // 1) si le block de TNT vient d’être primé, sa loc "bloc" = loc de spawn entité
+        UUID who = tntPlacedBy.remove(keyOf(ent.getLocation()));
 
-        TeamColor owner = getOwner((TNTPrimed) e.getEntity());
-        if (owner == null) return;
-
-        // Détermine le côté via field.middleX
-        double middleX = plugin.getConfig().getDouble("field.middleX", 0.0);
-        boolean explosionOnBlueSide = e.getLocation().getX() < middleX;
-
-        // Si TNT du bleu sur côté bleu → retire la casse de blocks
-        if (owner == TeamColor.BLUE && explosionOnBlueSide) {
-            e.blockList().clear();
-        }
-        // Si TNT du rouge sur côté rouge → retire la casse de blocks
-        if (owner == TeamColor.RED && !explosionOnBlueSide) {
-            e.blockList().clear();
-        }
-    }
-
-    /** Empêche dégâts alliés par TNT si friendlyFireTNT=false */
-    @EventHandler public void onDamage(EntityDamageByEntityEvent e){
-        if (!(e.getDamager() instanceof TNTPrimed tnt)) return;
-        boolean ffOff = !plugin.getConfig().getBoolean("gameplay.friendlyFireTNT", false) ? true : false;
-        if (!ffOff) return;
-
-        TeamColor owner = getOwner(tnt);
-        if (owner == null) return;
-
-        if (e.getEntity() instanceof org.bukkit.entity.Player p){
-            TeamColor victim = teams.get(p);
-            if (victim != null && victim == owner){
-                e.setCancelled(true);
+        // 2) fallback Paper (si présent) : source vivante (ex: joueur qui a allumé au briquet)
+        // (compatible Spigot: getSource peut ne pas exister; safe cast check)
+        if (who == null) {
+            try {
+                Entity src = ((TNTPrimed) ent).getSource();
+                if (src instanceof Player) who = ((Player) src).getUniqueId();
+            } catch (NoSuchMethodError ignored) {
+                // Spigot pur: pas de getSource()
             }
         }
+
+        if (who != null) {
+            ent.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, who.toString());
+        }
     }
 
-    private TeamColor getOwner(TNTPrimed tnt){
-        try {
-            String val = tnt.getPersistentDataContainer().get(OWNER_KEY, PersistentDataType.STRING);
-            if (val == null) return null;
-            return TeamColor.valueOf(val);
-        } catch (Throwable ignored){
-            return null;
+    @EventHandler
+    public void onExplode(EntityExplodeEvent e) {
+        if (!(e.getEntity() instanceof TNTPrimed)) return;
+
+        // Récupère owner si existant
+        String ownerStr = e.getEntity().getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
+        if (ownerStr == null) return;
+
+        UUID ownerId;
+        try { ownerId = UUID.fromString(ownerStr); } catch (IllegalArgumentException ex) { return; }
+
+        Player owner = plugin.getServer().getPlayer(ownerId);
+        TeamColor ownerTeam = (owner == null ? null : teams.get(owner));
+        if (ownerTeam == null) return;
+
+        // Option friendly-fire par côté (basée sur field.middleX)
+        boolean preventFF = plugin.getConfig().getBoolean("tnt.preventFriendlyFireBySide", true);
+        if (!preventFF) return;
+
+        double middleX = plugin.getConfig().getDouble("field.middleX", 0.0);
+        double expX = e.getLocation().getX();
+
+        // Détermine le "côté" du point d’explosion
+        // Convention: X < middleX = Blue-side ; X >= middleX = Red-side
+        TeamColor side =
+                (expX < middleX) ? TeamColor.BLUE : TeamColor.RED;
+
+        // Si l’explosion se produit sur le même côté que l’owner → on annule la casse de blocs (friendly fire off)
+        if (side == ownerTeam) {
+            e.blockList().clear(); // on laisse l’effet visuel/knockback, mais pas de destruction
         }
     }
 }
