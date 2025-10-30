@@ -78,9 +78,8 @@ gameplay:
   # Seuil "void" (si joueur passe sous cette Y → TP base et -1 vie, sans écran de mort)
   voidKillY: 50
 
-tnt:
-  # true = on empêche la casse côté "propre" (même côté que l'auteur)
-  preventFriendlyFireBySide: true
+  # Dégâts/casse côté propre (false = pas de dégâts/casse côté propre)
+  friendlyFireTNT: false # false = pas de dégâts/casse côté propre
 
 scoreboard:
   enabled: true

@@ -33,6 +33,7 @@ public class KaboomCupLesa extends JavaPlugin {
     private Sidebar sidebar;
     private KitService kits;
     private LeagueStore league;
+    private BossBarService bossbar;
 
     private FileConfiguration messages;
     private final String logPrefix = "[KaboomCup] ";
@@ -56,6 +57,7 @@ public class KaboomCupLesa extends JavaPlugin {
         sidebar = new Sidebar(this, game);
         kits    = new KitService(this);
         league  = new LeagueStore(this);
+        bossbar = new BossBarService(this, game);
 
         // Commands
         KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, tags, kits);
@@ -177,7 +179,6 @@ public class KaboomCupLesa extends JavaPlugin {
         String msg = msg(msgKey);
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(msg));
     }
-
     public TeamManager teams() { return teams; }
     public GameManager game() { return game; }
     public NametagService tags() { return tags; }
@@ -185,4 +186,5 @@ public class KaboomCupLesa extends JavaPlugin {
     public Sidebar sidebar() { return sidebar; }
     public KitService kits() { return kits; }
     public LeagueStore league() { return league; }
+    public BossBarService bossbar() { return bossbar; }
 }

@@ -86,36 +86,34 @@ public class GameManager {
     /** Démarrage administrateur (gel + TP + clear + kits + timer) */
     public void adminStartMatch() {
         if (state != GameState.LOBBY) return;
-
         if (baseBlue == null || baseRed == null) {
             plugin.warn("Bases non définies. Utilise /kaboom setblue et /kaboom setred");
             return;
         }
-
-        // Reset vies pour tous les joueurs d’équipes
         resetAllLivesToDefault();
 
-        // Freeze de départ
         int freeze = Math.max(0, plugin.getConfig().getInt("rules.freezeOnStartSeconds", 5));
         setFreeze(true);
         Bukkit.broadcastMessage(plugin.color("&7[&eKaboom&7] &fDépart dans &e" + freeze + "s"));
 
-        // Go après le gel
         new BukkitRunnable() {
             @Override
             public void run() {
-                // TP + clear + enlever item hub + donner kit simple si configuré
+                boolean teamArmor = plugin.getConfig().getBoolean("gameplay.teamArmor", true);
+
                 for (Player p : teams.online(TeamColor.BLUE)) {
                     safeTeleport(p, baseBlue());
                     p.getInventory().clear();
                     plugin.kits().clearHubItem(p);
                     plugin.kits().giveStartKitIfConfigured(p);
+                    if (teamArmor) plugin.tags().equipArmor(p, TeamColor.BLUE);
                 }
                 for (Player p : teams.online(TeamColor.RED)) {
                     safeTeleport(p, baseRed());
                     p.getInventory().clear();
                     plugin.kits().clearHubItem(p);
                     plugin.kits().giveStartKitIfConfigured(p);
+                    if (teamArmor) plugin.tags().equipArmor(p, TeamColor.RED);
                 }
 
                 setFreeze(false);
@@ -151,15 +149,15 @@ public class GameManager {
         timer.stop();
         state = GameState.LOBBY;
         setFreeze(false);
-
-        // reset vies
         lives.clear();
 
-        // TP spawn + redonner item hub
         if (spawn != null) {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 safeTeleport(p, spawn());
                 plugin.kits().giveHubItem(p);
+                if (plugin.getConfig().getBoolean("gameplay.teamArmor", true)) {
+                    plugin.tags().unequipArmor(p);
+                }
             }
         }
         Bukkit.broadcastMessage(plugin.color("&7[&eKaboom&7] &fPartie terminée."));
