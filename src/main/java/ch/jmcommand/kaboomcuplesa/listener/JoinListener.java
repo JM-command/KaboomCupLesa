@@ -9,7 +9,6 @@ import org.bukkit.GameMode;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class JoinListener implements Listener {
 
@@ -18,7 +17,10 @@ public class JoinListener implements Listener {
     private final NametagService tags;
     private final KitService kits;
 
-    public JoinListener(KaboomCupLesa plugin, Object unused, TeamManager teams, NametagService tags, KitService kits) {
+    public JoinListener(KaboomCupLesa plugin,
+                        TeamManager teams,
+                        NametagService tags,
+                        KitService kits) {
         this.plugin = plugin;
         this.teams = teams;
         this.tags = tags;
@@ -32,15 +34,10 @@ public class JoinListener implements Listener {
         // TP spawn si configuré
         var sp = plugin.game().spawn();
         if (sp != null) e.getPlayer().teleport(sp);
-
-        // forcer adventure (certains serveurs remettent survival après join)
         e.getPlayer().setGameMode(GameMode.ADVENTURE);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                e.getPlayer().setGameMode(GameMode.ADVENTURE);
-            }
-        }.runTaskLater(plugin, 5L);
+
+        // bossbar
+        plugin.bossbar().add(e.getPlayer());
 
         // Donner l'item hub si LOBBY
         if (plugin.game().state() == GameState.LOBBY) {

@@ -21,7 +21,11 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
     private final NametagService tags;
     private final KitService kits;
 
-    public KaboomCommand(KaboomCupLesa plugin, GameManager game, TeamManager teams, NametagService tags, KitService kits) {
+    public KaboomCommand(KaboomCupLesa plugin,
+                         GameManager game,
+                         TeamManager teams,
+                         NametagService tags,
+                         KitService kits) {
         this.plugin = plugin;
         this.game = game;
         this.teams = teams;
@@ -62,6 +66,7 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
                 return true;
 
             case "play": // reprise
+            case "resume":
                 game.adminResume();
                 return true;
 
@@ -113,7 +118,8 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
                 }
                 teams.force(tgt, t);
                 tags.apply(tgt, t);
-                sender.sendMessage(plugin.msg("admin.forcedTeam", Map.of("player", tgt.getName(), "team", t.display())));
+                sender.sendMessage(plugin.msg("admin.forcedTeam",
+                        Map.of("player", tgt.getName(), "team", t.display())));
                 return true;
             }
 

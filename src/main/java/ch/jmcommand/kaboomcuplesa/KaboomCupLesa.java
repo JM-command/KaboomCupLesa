@@ -1,14 +1,17 @@
 package ch.jmcommand.kaboomcuplesa;
 
-import ch.jmcommand.kaboomcuplesa.command.*;
-import ch.jmcommand.kaboomcuplesa.game.*;
-import ch.jmcommand.kaboomcuplesa.kit.*;
+import ch.jmcommand.kaboomcuplesa.command.KaboomCommand;
+import ch.jmcommand.kaboomcuplesa.command.KitCommand;
+import ch.jmcommand.kaboomcuplesa.command.MenuCommand;
+import ch.jmcommand.kaboomcuplesa.game.GameManager;
+import ch.jmcommand.kaboomcuplesa.kit.KitService;
 import ch.jmcommand.kaboomcuplesa.listener.*;
-import ch.jmcommand.kaboomcuplesa.scoreboard.*;
-import ch.jmcommand.kaboomcuplesa.team.*;
-import ch.jmcommand.kaboomcuplesa.ui.*;
-import ch.jmcommand.kaboomcuplesa.storage.*;
-
+import ch.jmcommand.kaboomcuplesa.scoreboard.Sidebar;
+import ch.jmcommand.kaboomcuplesa.scoreboard.BossBarService;
+import ch.jmcommand.kaboomcuplesa.storage.LeagueStore;
+import ch.jmcommand.kaboomcuplesa.team.NametagService;
+import ch.jmcommand.kaboomcuplesa.team.TeamManager;
+import ch.jmcommand.kaboomcuplesa.ui.TeamMenu;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -39,7 +42,9 @@ public class KaboomCupLesa extends JavaPlugin {
     private FileConfiguration messages;
     private final String logPrefix = "[KaboomCup] ";
 
-    public static KaboomCupLesa get() { return instance; }
+    public static KaboomCupLesa get() {
+        return instance;
+    }
 
     @Override
     public void onEnable() {
@@ -51,41 +56,37 @@ public class KaboomCupLesa extends JavaPlugin {
 
         info("Plugin activé. Version: " + getDescription().getVersion());
 
-        teams   = new TeamManager(this);
-        game    = new GameManager(this, teams, null); // plus de ZoneManager
-        tags    = new NametagService(this);
-        menu    = new TeamMenu(this, teams, tags);
-        sidebar = new Sidebar(this, game);
-        kits    = new KitService(this);
-        league  = new LeagueStore(this);
-        bossbar = new BossBarService(this, game);
-        damageTracker = new DamageTrackerListener(this);
+        // services
+        this.teams = new TeamManager(this);
+        this.game = new GameManager(this, teams, null); // plus de ZoneManager
+        this.tags = new NametagService(this);
+        this.menu = new TeamMenu(this, teams, tags); // ← 3 arguments maintenant
+        this.sidebar = new Sidebar(this, game);
+        this.kits = new KitService(this);
+        this.league = new LeagueStore(this);
+        this.bossbar = new BossBarService(this, game);
+        this.damageTracker = new DamageTrackerListener(this);
 
-
-        // Commands
+        // commandes
         KaboomCommand kaboomCmd = new KaboomCommand(this, game, teams, tags, kits);
-
         getCommand("kaboom").setExecutor(kaboomCmd);
         getCommand("kaboom").setTabCompleter(kaboomCmd);
         getCommand("menu").setExecutor(new MenuCommand(this, menu));
         getCommand("kit").setExecutor(new KitCommand(this, kits));
 
-        // Listeners
+        // listeners
         var pm = getServer().getPluginManager();
-
         pm.registerEvents(new JoinListener(this, teams, tags, kits), this);
         pm.registerEvents(new InventoryListener(menu), this);
         pm.registerEvents(new HubItemListener(this, game, menu), this);
         pm.registerEvents(new HungerVoidListener(this, game), this);
         pm.registerEvents(new FreezeMoveListener(game), this);
         pm.registerEvents(new MenuLockListener(this, game), this);
-        pm.registerEvents(new DeathListener(game), this);
+        pm.registerEvents(new DeathListener(), this); // plus d'appel à game.onPlayerDeath()
         pm.registerEvents(new QuitListener(), this);
         pm.registerEvents(new TNTOwnershipListener(this, teams), this);
         pm.registerEvents(new LobbyProtectionListener(this), this);
         pm.registerEvents(damageTracker, this);
-
-
 
         info("Initialisation terminée.");
     }
@@ -121,7 +122,9 @@ public class KaboomCupLesa extends JavaPlugin {
         }
     }
 
-    public FileConfiguration messages() { return messages; }
+    public FileConfiguration messages() {
+        return messages;
+    }
 
     /* ========= TEXT ========= */
 
@@ -155,10 +158,12 @@ public class KaboomCupLesa extends JavaPlugin {
     public void warn(String s)  { getLogger().warning(logPrefix + s); }
     public void error(String s) { getLogger().severe(logPrefix + s); }
 
-    /* ========= Fallback /kaboom reload (au cas où) ========= */
+    /* ========= /kaboom fallback ========= */
+
     @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!command.getName().equalsIgnoreCase("kaboom")) return false;
+
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("kaboom.admin")) {
                 sender.sendMessage(color(messages().getString("errors.noPermission")));
@@ -168,6 +173,7 @@ public class KaboomCupLesa extends JavaPlugin {
             sender.sendMessage(color(messages().getString("admin.configReloaded")));
             return true;
         }
+
         sender.sendMessage(color(messages().getString("help.header")));
         for (String line : messages().getStringList("help.lines")) {
             sender.sendMessage(color(line
@@ -177,14 +183,17 @@ public class KaboomCupLesa extends JavaPlugin {
         return true;
     }
 
-    /* ========= Helpers ========= */
+    /* ========= HELPERS ========= */
 
-    public String gameWorldName() { return getConfig().getString("world", "tntwars"); }
+    public String gameWorldName() {
+        return getConfig().getString("world", "tntwars");
+    }
 
     public void broadcast(String msgKey) {
         String msg = msg(msgKey);
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(msg));
     }
+
     public TeamManager teams() { return teams; }
     public GameManager game() { return game; }
     public NametagService tags() { return tags; }
@@ -193,5 +202,5 @@ public class KaboomCupLesa extends JavaPlugin {
     public KitService kits() { return kits; }
     public LeagueStore league() { return league; }
     public BossBarService bossbar() { return bossbar; }
-    public DamageTrackerListener damageTracker() { return damageTracker;
+    public DamageTrackerListener damageTracker() { return damageTracker; }
 }
