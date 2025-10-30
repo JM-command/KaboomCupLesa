@@ -319,4 +319,42 @@ public class GameManager {
         }
         public int secondsLeft() { return Math.max(0, secondsLeft); }
     }
+
+    public TeamColor leadingTeamColor() {
+        // si t'as pas de league configurée, on évite le NPE
+        if (plugin.league() == null) return null;
+
+        int bluePts = plugin.league().getPoints(TeamColor.BLUE);
+        int redPts  = plugin.league().getPoints(TeamColor.RED);
+
+        if (bluePts > redPts) return TeamColor.BLUE;
+        if (redPts > bluePts) return TeamColor.RED;
+        return null; // égalité
+    }
+
+    public String leadingTeamLabel() {
+        TeamColor tc = leadingTeamColor();
+        if (tc == null) {
+            return "&7Aucun (égalité)";
+        }
+        return (tc == TeamColor.BLUE) ? "&9Blue" : "&cRed";
+    }
+
+    public String leadingTeamPointsLine() {
+        if (plugin.league() == null) {
+            return "&7Leader: &f-";
+        }
+
+        int bluePts = plugin.league().getPoints(TeamColor.BLUE);
+        int redPts  = plugin.league().getPoints(TeamColor.RED);
+
+        if (bluePts > redPts) {
+            return "&7Leader: &9Blue &7(" + bluePts + " pts)";
+        } else if (redPts > bluePts) {
+            return "&7Leader: &cRed &7(" + redPts + " pts)";
+        } else {
+            return "&7Leader: &fÉgalité (" + bluePts + " - " + redPts + ")";
+        }
+    }
+
 }

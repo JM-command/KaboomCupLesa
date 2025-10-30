@@ -3,7 +3,6 @@ package ch.jmcommand.kaboomcuplesa.scoreboard;
 import ch.jmcommand.kaboomcuplesa.KaboomCupLesa;
 import ch.jmcommand.kaboomcuplesa.game.GameManager;
 import ch.jmcommand.kaboomcuplesa.game.GameState;
-import ch.jmcommand.kaboomcuplesa.team.TeamColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
@@ -32,6 +31,7 @@ public class Sidebar {
         );
         this.obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
+        // on fait 8 lignes max
         createLine(8, "L0");
         createLine(7, "L1");
         createLine(6, "L2");
@@ -41,8 +41,11 @@ public class Sidebar {
         createLine(2, "L6");
         createLine(1, "L7");
 
-        for (Player pl : Bukkit.getOnlinePlayers()) pl.setScoreboard(sb);
+        for (Player pl : Bukkit.getOnlinePlayers()) {
+            pl.setScoreboard(sb);
+        }
 
+        // update chaque seconde
         Bukkit.getScheduler().runTaskTimer(plugin, this::update, 0L, 20L);
     }
 
@@ -72,42 +75,54 @@ public class Sidebar {
     public void update(){
         if (!plugin.getConfig().getBoolean("scoreboard.enabled", true)) return;
 
-        // league infos
-        int week = plugin.league().getWeek();
-        int bluePts = plugin.league().getPoints(TeamColor.BLUE);
-        int redPts  = plugin.league().getPoints(TeamColor.RED);
-        String leader;
-        if (bluePts == redPts) {
-            leader = plugin.msg("league.leaderTie");
-        } else if (bluePts > redPts) {
-            leader = plugin.msg("league.leaderBlue", Map.of("points", String.valueOf(bluePts)));
-        } else {
-            leader = plugin.msg("league.leaderRed", Map.of("points", String.valueOf(redPts)));
-        }
+        int week = (plugin.league() != null) ? plugin.league().getWeek() : 1;
+        String leaderLine = game.leadingTeamPointsLine(); // ← on réutilise le helper
 
-        if (game.state() == GameState.LOBBY || game.state() == GameState.PAUSED){
-            set("L0", plugin.msg("league.sidebarWeek", Map.of("week", String.valueOf(week))));
-            set("L1", leader);
-            set("L2", "&7Etat: &f" + game.state().name());
-            set("L3", "&9Blue joueurs: &f" + game.teamSizeBlue());
-            set("L4", "&cRed  joueurs: &f" + game.teamSizeRed());
-            set("L5", "&7Tip: &fClique la boussole &7(ou /menu)");
-            set("L6", plugin.color("&7" + plugin.getConfig().getString("scoreboard.sponsorFooter","")));
-            set("L7", "");
+        // header
+        set("L0", "&e&lKaboomCup");
+        set("L1", "&7──────────");
+
+        if (game.state() == GameState.LOBBY || game.state() == GameState.PAUSED) {
+            // bloc ligue
+            set("L2", "&fSemaine &e#" + week);
+            set("L3", leaderLine);
+
+            // état
+            set("L4", "&7État: &6" + game.state().name());
+
+            // joueurs
+            set("L5", "&9Blue: &f" + game.teamSizeBlue());
+            set("L6", "&cRed : &f" + game.teamSizeRed());
+
+            // tip + footer
+            String footer = plugin.getConfig().getString("scoreboard.sponsorFooter", "");
+            set("L7", footer.isEmpty() ? "&7» &fClique la boussole" : plugin.color("&8" + footer));
+
         } else {
+            // match en cours
             int secs = game.secondsLeft();
-            String mm = String.format("%02d", secs/60);
-            String ss = String.format("%02d", secs%60);
-            set("L0", plugin.msg("league.sidebarWeek", Map.of("week", String.valueOf(week))));
-            set("L1", leader);
-            set("L2", "&7Etat: &aRUNNING");
-            set("L3", plugin.getConfig().getBoolean("scoreboard.showTimer", true) ? "&7Timer: &f" + mm + ":" + ss : "");
-            set("L4", "&9Blue vies: &f" + game.livesStringBlue());
-            set("L5", "&cRed  vies: &f" + game.livesStringRed());
-            set("L6", plugin.color("&7" + plugin.getConfig().getString("scoreboard.sponsorFooter","")));
-            set("L7", "");
+            String mm = String.format("%02d", secs / 60);
+            String ss = String.format("%02d", secs % 60);
+
+            set("L2", "&fSemaine &e#" + week);
+            set("L3", leaderLine);
+            set("L4", "&7État: &aEN JEU");
+
+            if (plugin.getConfig().getBoolean("scoreboard.showTimer", true)) {
+                set("L5", "&7Timer: &f" + mm + ":" + ss);
+            } else {
+                set("L5", "");
+            }
+
+            set("L6", "&9Blue ❤: &f" + game.livesStringBlue());
+            set("L7", "&cRed  ❤: &f" + game.livesStringRed());
         }
 
-        for (Player pl : Bukkit.getOnlinePlayers()) if (pl.getScoreboard()!=sb) pl.setScoreboard(sb);
+        // appliquer au cas où des joueurs se co après
+        for (Player pl : Bukkit.getOnlinePlayers()) {
+            if (pl.getScoreboard() != sb) {
+                pl.setScoreboard(sb);
+            }
+        }
     }
 }
