@@ -17,7 +17,10 @@ public class JoinListener implements Listener {
     private final NametagService tags;
     private final KitService kits;
 
-    public JoinListener(KaboomCupLesa plugin, TeamManager teams, NametagService tags, KitService kits) {
+    public JoinListener(KaboomCupLesa plugin,
+                        TeamManager teams,
+                        NametagService tags,
+                        KitService kits) {
         this.plugin = plugin;
         this.teams = teams;
         this.tags = tags;
@@ -27,17 +30,22 @@ public class JoinListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         e.setJoinMessage(null);
+
+        // TP spawn si configuré
         var sp = plugin.game().spawn();
         if (sp != null) e.getPlayer().teleport(sp);
         e.getPlayer().setGameMode(GameMode.ADVENTURE);
 
+        // bossbar
+        plugin.bossbar().add(e.getPlayer());
+
+        // Donner l'item hub si LOBBY
         if (plugin.game().state() == GameState.LOBBY) {
             kits.giveHubItem(e.getPlayer());
         }
 
+        // Recolorer si déjà en team (reload, etc.)
         var t = teams.get(e.getPlayer());
-        if (t != null) {
-            tags.apply(e.getPlayer(), t); // applique nametag + armure si activée
-        }
+        if (t != null) tags.apply(e.getPlayer(), t);
     }
 }

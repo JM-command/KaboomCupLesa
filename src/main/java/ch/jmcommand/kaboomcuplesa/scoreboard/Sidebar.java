@@ -23,13 +23,16 @@ public class Sidebar {
         this.plugin = plugin;
         this.game = game;
 
+        // IMPORTANT : on prend le MAIN scoreboard pour ne PAS casser les nametags
         ScoreboardManager sm = Bukkit.getScoreboardManager();
-        this.sb = sm.getNewScoreboard();
-        this.obj = sb.registerNewObjective(
-                "kaboom","dummy",
-                plugin.color("&lKaboomCup Lesa")
-        );
-        this.obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        this.sb = sm.getMainScoreboard();
+
+        Objective tmp = sb.getObjective("kaboom_main");
+        if (tmp == null) {
+            tmp = sb.registerNewObjective("kaboom_main","dummy", plugin.color("&lKaboomCup Lesa"));
+            tmp.setDisplaySlot(DisplaySlot.SIDEBAR);
+        }
+        this.obj = tmp;
 
         createLine(7, "L1");
         createLine(6, "L2");
@@ -45,12 +48,13 @@ public class Sidebar {
     }
 
     private void createLine(int score, String key){
-        // IMPORTANT: utiliser le vrai caractère couleur pour éviter le "Â§"
-        String entry = "\u00A7" + Integer.toHexString(score);
-        Team team = sb.getTeam("LINE_" + score);
-        if (team == null) team = sb.registerNewTeam("LINE_" + score);
-        if (!team.hasEntry(entry)) team.addEntry(entry);
-        obj.getScore(entry).setScore(score);
+        String entry = "§" + Integer.toHexString(score);
+        Team team = sb.getTeam("KAB_LINE_" + score);
+        if (team == null) {
+            team = sb.registerNewTeam("KAB_LINE_" + score);
+            team.addEntry(entry);
+            obj.getScore(entry).setScore(score);
+        }
         lineTeams.put(key, team);
     }
 

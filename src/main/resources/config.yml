@@ -99,19 +99,19 @@ kits:
       - OBSIDIAN:16
       - WATER_BUCKET:1
       - STONE:64
-      - IRON_PICKAXE:1
+      - DIAMOND_PICKAXE:1
 
   tnt:
-    items: [TNT:48, REDSTONE:64, REDSTONE_REPEATER:16, LEVER:4, STONE:64]
+    items: [TNT:64]
 
   pioche:
-    items: [IRON_PICKAXE:1, DIAMOND_PICKAXE:1]
+    items: [DIAMOND_PICKAXE:1, DIAMOND_PICKAXE:1]
 
   redstone:
     items: [REDSTONE:64, REDSTONE_TORCH:16, REDSTONE_REPEATER:16, COMPARATOR:8, LEVER:4]
 
   blocks:
-    items: [STONE:128, OBSIDIAN:32, SAND:32, GLASS:32]
+    items: [STONE:128, OBSIDIAN:32, DIRT:32, OAK_LOG:32]
 
   water:
-    items: [WATER_BUCKET:1, BUCKET:2]
+    items: [WATER_BUCKET:3]

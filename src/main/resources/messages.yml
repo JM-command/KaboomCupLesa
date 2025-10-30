@@ -85,3 +85,8 @@ bossbar:
 
 misc:
   joinedLobby: "&7Bienvenue au hub. Ouvre &e/menu &7pour choisir une équipe."
+
+kills:
+  # Kills / attribution
+  voidPushed: "&e{killer} &7a poussé &c{victim} &7dans le vide !"
+  voidSolo: "&c{victim} &7est tombé dans le vide."
