@@ -69,6 +69,8 @@ help:
     - "&e/kit redstone &7: redstone pur"
     - "&e/kit blocks &7: blocs de construction"
     - "&e/kit water &7: seaux et utilitaires d'eau"
+  leagueExtra: "&e/kaboom league &7: gérer la ligue (semaine + points)"
+
 
 scoreboard:
   title: "&lKaboomCup Lesa"
@@ -90,3 +92,20 @@ kills:
   # Kills / attribution
   voidPushed: "&e{killer} &7a poussé &c{victim} &7dans le vide !"
   voidSolo: "&c{victim} &7est tombé dans le vide."
+
+league:
+  header: "&6Ligue Kaboom &7(3 manches)"
+  currentWeek: "&7Semaine actuelle: &e{week}/3"
+  setWeek: "&aSemaine de ligue définie sur &e{week}&a."
+  pointsBlue: "&9Points BLEU: &f{points}"
+  pointsRed: "&cPoints ROUGE: &f{points}"
+  addPoints: "&a+{points} points pour {team} &7(Nouveau total: {total})"
+  usage: "&7/kaboom league week <1-3> &8| &7/kaboom league add <blue|red> <pts>"
+  sidebarWeek: "&eLigue: semaine {week}"
+  leaderBlue: "&9Bleu en tête &7({points} pts)"
+  leaderRed: "&cRouge en tête &7({points} pts)"
+  leaderTie: "&fÉgalité &7(bleu/rouge)"
+  resetOk: "&aPoints de ligue remis à &f0&a pour bleu et rouge."
+  sidebarLeaderShort: "&7Leader: {leader}"
+
+

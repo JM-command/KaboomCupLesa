@@ -10,7 +10,7 @@ meta:
   website: "https://IrixiaGroup.ch"
 
 # Monde de jeu (doit exister sur le serveur)
-world: "tntwars"
+world: "TNTWARS_FINAL"
 
 # Positions persistées par:
 #   /kaboom setspawn
@@ -18,22 +18,22 @@ world: "tntwars"
 #   /kaboom setred
 # Laisser vide au début ; les commandes rempliront ces valeurs.
 spawns:
-  spawn:      # Ex: { world: tntwars, x: 0.5, y: 80.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
-    world: tntwars
+  spawn:      # Ex: { world: TNTWARS_FINAL, x: 0.5, y: 80.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
+    world: TNTWARS_FINAL
     x: 0.5
     y: 101.0
     z: 0.5
     yaw: 0.33972168
     pitch: 0.75575876
   baseBlue:
-    world: tntwars
+    world: TNTWARS_FINAL
     x: -51.594890463909884
     y: 65.0
     z: 65.40621724230765
     yaw: -89.82861
     pitch: -1.0545828
   baseRed:
-    world: tntwars
+    world: TNTWARS_FINAL
     x: 52.63207854417409
     y: 65.0
     z: 66.44070486100604

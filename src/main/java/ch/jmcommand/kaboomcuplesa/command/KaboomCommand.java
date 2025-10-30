@@ -65,7 +65,7 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
                 game.adminPause();
                 return true;
 
-            case "play": // reprise
+            case "play":
             case "resume":
                 game.adminResume();
                 return true;
@@ -118,15 +118,75 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
                 }
                 teams.force(tgt, t);
                 tags.apply(tgt, t);
-                sender.sendMessage(plugin.msg("admin.forcedTeam",
-                        Map.of("player", tgt.getName(), "team", t.display())));
+                sender.sendMessage(plugin.msg("admin.forcedTeam", Map.of("player", tgt.getName(), "team", t.display())));
                 return true;
             }
+
+            case "league":
+                return handleLeague(sender, args);
 
             default:
                 sendHelp(sender);
                 return true;
         }
+    }
+
+    private boolean handleLeague(CommandSender sender, String[] args) {
+        // /kaboom league
+        if (args.length == 1) {
+            int week = plugin.league().getWeek();
+            int blue = plugin.league().getPoints(TeamColor.BLUE);
+            int red = plugin.league().getPoints(TeamColor.RED);
+            sender.sendMessage(plugin.msg("league.header"));
+            sender.sendMessage(plugin.msg("league.currentWeek", Map.of("week", String.valueOf(week))));
+            sender.sendMessage(plugin.msg("league.pointsBlue", Map.of("points", String.valueOf(blue))));
+            sender.sendMessage(plugin.msg("league.pointsRed", Map.of("points", String.valueOf(red))));
+            sender.sendMessage(plugin.msg("league.usage"));
+            return true;
+        }
+
+        // /kaboom league reset
+        if (args.length == 2 && args[1].equalsIgnoreCase("reset")) {
+            plugin.league().reset();
+            sender.sendMessage(plugin.msg("league.resetOk"));
+            return true;
+        }
+
+        // /kaboom league week <n>
+        if (args.length >= 3 && args[1].equalsIgnoreCase("week")) {
+            int n;
+            try {
+                n = Integer.parseInt(args[2]);
+            } catch (NumberFormatException ex) {
+                sender.sendMessage(plugin.msg("errors.invalidArgs"));
+                return true;
+            }
+            plugin.league().setWeek(n);
+            sender.sendMessage(plugin.msg("league.setWeek", Map.of("week", String.valueOf(n))));
+            return true;
+        }
+
+        // /kaboom league add <blue|red> <points>
+        if (args.length >= 4 && args[1].equalsIgnoreCase("add")) {
+            TeamColor t = args[2].equalsIgnoreCase("blue") ? TeamColor.BLUE : TeamColor.RED;
+            int pts;
+            try {
+                pts = Integer.parseInt(args[3]);
+            } catch (NumberFormatException ex) {
+                sender.sendMessage(plugin.msg("errors.invalidArgs"));
+                return true;
+            }
+            plugin.league().addPoint(t, pts);
+            sender.sendMessage(plugin.msg("league.addPoints", Map.of(
+                    "team", t.display(),
+                    "points", String.valueOf(pts),
+                    "total", String.valueOf(plugin.league().getPoints(t))
+            )));
+            return true;
+        }
+
+        sender.sendMessage(plugin.msg("errors.invalidArgs"));
+        return true;
     }
 
     private void sendHelp(CommandSender s) {
@@ -135,16 +195,26 @@ public class KaboomCommand implements CommandExecutor, TabCompleter {
             s.sendMessage(plugin.color(line.replace("{freeze}",
                     String.valueOf(plugin.getConfig().getInt("rules.freezeOnStartSeconds", 5)))));
         }
+        // on ajoute une ligne league
+        s.sendMessage(plugin.msg("help.leagueExtra"));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1)
-            return List.of("start", "pause", "play", "stop", "force", "setspawn", "setblue", "setred", "reload");
+            return List.of("start", "pause", "play", "stop", "force", "setspawn", "setblue", "setred", "reload", "league");
         if (args.length == 2 && args[0].equalsIgnoreCase("force"))
             return null; // pseudos
         if (args.length == 3 && args[0].equalsIgnoreCase("force"))
             return List.of("blue", "red");
+
+        // /kaboom league ...
+        if (args.length == 2 && args[0].equalsIgnoreCase("league")) {
+            return List.of("week", "add", "reset");
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("league") && args[1].equalsIgnoreCase("add")) {
+            return List.of("blue", "red");
+        }
         return List.of();
     }
 }
