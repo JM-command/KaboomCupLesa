@@ -1,17 +1,13 @@
 package ch.jmcommand.kaboomcuplesa;
 
-import ch.jmcommand.kaboomcuplesa.command.KaboomCommand;
-import ch.jmcommand.kaboomcuplesa.command.KitCommand;
-import ch.jmcommand.kaboomcuplesa.command.MenuCommand;
-import ch.jmcommand.kaboomcuplesa.game.GameManager;
-import ch.jmcommand.kaboomcuplesa.kit.KitService;
+import ch.jmcommand.kaboomcuplesa.command.*;
+import ch.jmcommand.kaboomcuplesa.game.*;
+import ch.jmcommand.kaboomcuplesa.kit.*;
 import ch.jmcommand.kaboomcuplesa.listener.*;
-import ch.jmcommand.kaboomcuplesa.scoreboard.BossBarService;
-import ch.jmcommand.kaboomcuplesa.scoreboard.Sidebar;
-import ch.jmcommand.kaboomcuplesa.team.NametagService;
-import ch.jmcommand.kaboomcuplesa.team.TeamManager;
-import ch.jmcommand.kaboomcuplesa.ui.TeamMenu;
-import ch.jmcommand.kaboomcuplesa.storage.LeagueStore;
+import ch.jmcommand.kaboomcuplesa.scoreboard.*;
+import ch.jmcommand.kaboomcuplesa.team.*;
+import ch.jmcommand.kaboomcuplesa.ui.*;
+import ch.jmcommand.kaboomcuplesa.storage.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -82,6 +78,7 @@ public class KaboomCupLesa extends JavaPlugin {
         pm.registerEvents(new MenuLockListener(this, game), this);
         pm.registerEvents(new DeathListener(game), this);
         pm.registerEvents(new QuitListener(), this);
+        pm.registerEvents(new TNTOwnershipListener(this, teams), this);
 
 
         info("Initialisation terminée.");
