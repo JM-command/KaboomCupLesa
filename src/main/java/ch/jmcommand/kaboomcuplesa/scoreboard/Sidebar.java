@@ -91,8 +91,8 @@ public class Sidebar {
             set("L4", "&7État: &6" + game.state().name());
 
             // joueurs
-            set("L5", "&9Blue: &f" + game.teamSizeBlue());
-            set("L6", "&cRed : &f" + game.teamSizeRed());
+            set("L5", "&9Blue ❤: &f" + game.livesStringBlue());
+            set("L6", "&cRed  ❤: &f" + game.livesStringRed());
 
             // tip + footer
             String footer = plugin.getConfig().getString("scoreboard.sponsorFooter", "");
