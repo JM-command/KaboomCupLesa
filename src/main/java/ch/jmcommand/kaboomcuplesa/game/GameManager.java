@@ -179,15 +179,37 @@ public class GameManager {
 
     public TeamColor teamOf(Player p) { return teams.get(p); }
 
-    public String livesStringBlue() { return livesStringFor(TeamColor.BLUE); }
-    public String livesStringRed()  { return livesStringFor(TeamColor.RED);  }
+    public String livesStringBlue() { return compactLivesStringFor(TeamColor.BLUE); }
+    public String livesStringRed()  { return compactLivesStringFor(TeamColor.RED); }
 
-    private String livesStringFor(TeamColor team) {
-        var ps = teams.online(team);
-        if (ps.isEmpty()) return "-";
-        return ps.stream()
-                .map(p -> p.getName() + ":" + lives.getOrDefault(p.getUniqueId(), defaultLives))
-                .collect(Collectors.joining(" "));
+    private String compactLivesStringFor(TeamColor team) {
+        String mode = plugin.getConfig().getString("scoreboard.livesMode", "sum").toLowerCase();
+        switch (mode) {
+            case "bars":
+                return livesBars(team);
+            case "sum":
+            default:
+                return String.valueOf(sumLives(team));
+        }
+    }
+
+    private int sumLives(TeamColor team) {
+        int def = defaultLives;
+        return teams.online(team).stream()
+                .mapToInt(p -> lives.getOrDefault(p.getUniqueId(), def))
+                .sum();
+    }
+
+    /** Petites barres : ◆ = joueur encore vivant (≥1 vie), ◇ = à zéro (ou absent) */
+    private String livesBars(TeamColor team) {
+        var players = teams.online(team);
+        if (players.isEmpty()) return "-";
+        StringBuilder sb = new StringBuilder();
+        for (var p : players) {
+            int lv = lives.getOrDefault(p.getUniqueId(), defaultLives);
+            sb.append(lv > 0 ? "♥" : "♡");
+        }
+        return sb.toString();
     }
 
     /* ===================== SPAWN / BASES ===================== */

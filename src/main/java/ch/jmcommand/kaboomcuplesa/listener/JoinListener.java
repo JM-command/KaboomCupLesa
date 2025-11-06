@@ -39,6 +39,12 @@ public class JoinListener implements Listener {
         // bossbar
         plugin.bossbar().add(e.getPlayer());
 
+        // Clear l'inventaire
+        if (plugin.game().state() == GameState.LOBBY) {
+            e.getPlayer().getInventory().clear();
+            e.getPlayer().getInventory().setArmorContents(null);
+        }
+
         // Donner l'item hub si LOBBY
         if (plugin.game().state() == GameState.LOBBY) {
             kits.giveHubItem(e.getPlayer());

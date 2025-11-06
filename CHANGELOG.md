@@ -1,3 +1,11 @@
+## 0.1.4 – 2025-11-06
+### Changé
+- **Scoreboard compact** : les vies d’équipe n’affichent plus les pseudos pour éviter les lignes trop longues.
+- Deux modes d’affichage configurables via `scoreboard.livesMode` :
+    - `sum` (par défaut) → total des vies restantes par équipe.
+    - `bars` → `◆` par joueur vivant, `◇` si out.
+- Join (en LOBBY) : clear inventaire + armure au join pour un état propre.
+
 ## 0.1.3 – 2025-10-30
 ### Ajouté
 - `BossBarService` pour afficher l’état du match (LOBBY / PAUSE / RUNNING + timer).

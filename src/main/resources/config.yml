@@ -85,6 +85,7 @@ scoreboard:
   enabled: true
   showTimer: true
   sponsorFooter: "Sponsor: IrixiaGroup.ch"
+  livesMode: "sum"   # "sum" ou "bars"
 
 # Kits disponibles (commande /kit <nom>)
 # "simple" est donné automatiquement au start si giveOnStart: true
